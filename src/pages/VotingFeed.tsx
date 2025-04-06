@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
@@ -6,7 +5,6 @@ import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Logo from '../components/Logo';
-import { Badge } from "@/components/ui/badge";
 
 // Sample data - in a real app, this would come from an API
 const mockMeals = [

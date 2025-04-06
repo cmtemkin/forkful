@@ -16,9 +16,10 @@ const Logo = ({ className = '', size = 'medium', inverted = false }: LogoProps) 
   
   const iconColor = inverted ? "text-[#FF7A5A]" : "text-white";
   const bgColor = inverted ? "bg-white" : "bg-[#FF7A5A]";
+  const textColor = inverted ? "text-[#FF7A5A]" : "text-white";
   
   return (
-    <div className={`flex flex-col items-center ${className}`}>
+    <div className={`flex items-center ${className}`}>
       <div className={`${bgColor} rounded-2xl p-4 ${sizes[size]}`}>
         <svg 
           viewBox="0 0 24 24" 
@@ -36,7 +37,7 @@ const Logo = ({ className = '', size = 'medium', inverted = false }: LogoProps) 
           />
         </svg>
       </div>
-      <span className="font-bold text-2xl mt-2 text-gray-800">Forkful</span>
+      <span className="font-outfit font-bold text-2xl ml-3 text-gray-800">Forkful</span>
     </div>
   );
 };
