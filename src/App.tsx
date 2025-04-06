@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./hooks/useAuth";
 import Layout from "./components/Layout";
 import VotingFeed from "./pages/VotingFeed";
 import CalendarView from "./pages/CalendarView";
@@ -13,32 +14,44 @@ import MealDetail from "./pages/MealDetail";
 import GroceryList from "./pages/GroceryList";
 import Households from "./pages/Households";
 import HouseholdDetail from "./pages/HouseholdDetail";
+import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import RequireAuth from "./components/RequireAuth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <TooltipProvider>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Navigate to="/feed" replace />} />
-            <Route path="feed" element={<VotingFeed />} />
-            <Route path="calendar" element={<CalendarView />} />
-            <Route path="add-meal" element={<AddMeal />} />
-            <Route path="edit-meal/:id" element={<EditMeal />} />
-            <Route path="meal/:id" element={<MealDetail />} />
-            <Route path="grocery-list" element={<GroceryList />} />
-            <Route path="households" element={<Households />} />
-            <Route path="household/:id" element={<HouseholdDetail />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-        <Sonner />
-      </TooltipProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <TooltipProvider>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* Protected routes */}
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Navigate to="/feed" replace />} />
+                <Route path="feed" element={<VotingFeed />} />
+                <Route path="calendar" element={<CalendarView />} />
+                <Route path="add-meal" element={<AddMeal />} />
+                <Route path="edit-meal/:id" element={<EditMeal />} />
+                <Route path="meal/:id" element={<MealDetail />} />
+                <Route path="grocery-list" element={<GroceryList />} />
+                <Route path="households" element={<Households />} />
+                <Route path="household/:id" element={<HouseholdDetail />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <Sonner />
+        </TooltipProvider>
+      </BrowserRouter>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
