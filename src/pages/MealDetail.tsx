@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2 } from 'lucide-react';
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ImageIcon } from 'lucide-react';
 
-// Sample data - in a real app, this would come from an API
 const mockMealData = {
   id: '1',
   title: 'Chicken Alfredo',
@@ -47,7 +45,6 @@ const MealDetail = () => {
   const [imageError, setImageError] = useState(false);
   
   useEffect(() => {
-    // In a real app, fetch the meal data from your API here
     setTimeout(() => {
       setMeal(mockMealData);
       setIsLocked(mockMealData.isLocked);
@@ -57,30 +54,41 @@ const MealDetail = () => {
   
   const toggleLock = () => {
     setIsLocked(!isLocked);
-    // In a real app, you would update this in your database
   };
   
   const handleDeleteMeal = () => {
-    // In a real app, this would delete the meal from your database
     toast({
       title: "Meal deleted",
       description: "The meal has been successfully deleted.",
     });
     
-    // Navigate back to the calendar view
     navigate('/calendar');
   };
   
   const generatePlaceholderColor = (title: string) => {
-    // Generate a deterministic color based on the title
     let hash = 0;
     for (let i = 0; i < title?.length || 0; i++) {
       hash = title.charCodeAt(i) + ((hash << 5) - hash);
     }
     
-    // Generate hue (0-360), high saturation and light
     const h = Math.abs(hash % 360);
     return `hsl(${h}, 70%, 80%)`;
+  };
+  
+  const handleUpvote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Upvoted",
+      description: `You upvoted ${meal?.title}`,
+    });
+  };
+  
+  const handleDownvote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Downvoted",
+      description: `You downvoted ${meal?.title}`,
+    });
   };
   
   if (isLoading) {
@@ -99,14 +107,12 @@ const MealDetail = () => {
   
   return (
     <div className="pb-20">
-      {/* Header with back button */}
       <div className="fixed top-0 left-0 right-0 bg-white z-30 flex items-center px-4 py-3 border-b">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
       </div>
       
-      {/* Meal image */}
       <div className="relative pt-12">
         <div className="bg-green-800 aspect-square">
           {meal.image && !imageError ? (
@@ -128,7 +134,6 @@ const MealDetail = () => {
         </div>
       </div>
       
-      {/* Meal details */}
       <div className="px-4 py-6">
         <h1 className="text-3xl font-bold mb-2">{meal.title}</h1>
         <div className="text-gray-600 mb-6">{meal.day} {meal.mealType}</div>
@@ -143,12 +148,12 @@ const MealDetail = () => {
           ))}
         </ul>
         
-        {/* Voting buttons */}
         <div className="flex gap-4 mb-8">
           <Button 
             variant="outline" 
             className="flex-1 upvote border-chow-upvote/20"
             disabled={isLocked}
+            onClick={handleUpvote}
           >
             <ThumbsUp className="mr-2 h-5 w-5" />
             <span>{meal.upvotes}</span>
@@ -157,13 +162,13 @@ const MealDetail = () => {
             variant="outline" 
             className="flex-1 downvote border-chow-downvote/20"
             disabled={isLocked}
+            onClick={handleDownvote}
           >
             <ThumbsDown className="mr-2 h-5 w-5" />
             <span>{meal.downvotes}</span>
           </Button>
         </div>
         
-        {/* Admin actions */}
         <div className="flex flex-col gap-4">
           <Button
             variant="outline"

@@ -80,6 +80,7 @@ const WeeklyView = () => {
               {topMeal ? (
                 <Link to={`/meal/${topMeal.id}`}>
                   <MealCard 
+                    id={topMeal.id}
                     title={topMeal.title}
                     image={topMeal.image}
                     upvotes={topMeal.upvotes || 0}

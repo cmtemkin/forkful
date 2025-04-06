@@ -38,6 +38,20 @@ const MealCard = ({
     return `hsl(${h}, 70%, 80%)`;
   };
   
+  const handleUpvote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Add upvote logic here
+    console.log('Upvoted:', id, title);
+  };
+  
+  const handleDownvote = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Add downvote logic here
+    console.log('Downvoted:', id, title);
+  };
+  
   return (
     <Link to={`/meal/${id}`} className="block">
       <div className="meal-card">
@@ -71,13 +85,21 @@ const MealCard = ({
           </div>
           <div className="flex gap-3 mt-2">
             <div className="flex items-center">
-              <button className="vote-button upvote mr-1" disabled={isLocked}>
+              <button 
+                className="vote-button upvote mr-1" 
+                disabled={isLocked}
+                onClick={handleUpvote}
+              >
                 <ThumbsUp className="h-4 w-4" />
               </button>
               <span className="text-sm font-medium">{upvotes}</span>
             </div>
             <div className="flex items-center">
-              <button className="vote-button downvote mr-1" disabled={isLocked}>
+              <button 
+                className="vote-button downvote mr-1" 
+                disabled={isLocked}
+                onClick={handleDownvote}
+              >
                 <ThumbsDown className="h-4 w-4" />
               </button>
               <span className="text-sm font-medium">{downvotes}</span>
