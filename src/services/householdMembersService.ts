@@ -1,8 +1,11 @@
+// This service is deprecated as the Households feature is coming soon
+// Keeping the file to maintain project structure
 
 import { supabase } from "@/integrations/supabase/client";
 import { HouseholdMember } from "@/types/household";
 import { User } from "@supabase/supabase-js";
 
+/*
 // Get all members of a household
 export const getHouseholdMembers = async (householdId: string): Promise<HouseholdMember[]> => {
   const { data, error } = await supabase
@@ -130,3 +133,11 @@ export const isUserHouseholdAdmin = async (householdId: string, user: User): Pro
 
   return data.role === 'admin';
 };
+*/
+
+// Exporting empty functions to maintain imports elsewhere
+export const getHouseholdMembers = async (): Promise<HouseholdMember[]> => [];
+export const addHouseholdMember = async (): Promise<void> => {};
+export const removeHouseholdMember = async (): Promise<void> => {};
+export const updateMemberRole = async (): Promise<void> => {};
+export const isUserHouseholdAdmin = async (): Promise<boolean> => false;

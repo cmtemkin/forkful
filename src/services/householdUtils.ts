@@ -1,3 +1,5 @@
+// This service is deprecated as the Households feature is coming soon
+// Keeping the file to maintain project structure
 
 import { supabase } from "@/integrations/supabase/client";
 import { HouseholdMember, RawHouseholdMember, UserProfile } from "@/types/household";
