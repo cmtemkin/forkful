@@ -5,13 +5,16 @@ interface MealIngredientsListProps {
   ingredients: string[];
 }
 
-const MealIngredientsList = ({ ingredients }: MealIngredientsListProps) => {
+const MealIngredientsList = ({ ingredients = [] }: MealIngredientsListProps) => {
+  // Ensure ingredients is always an array, even if undefined is passed
+  const safeIngredients = Array.isArray(ingredients) ? ingredients : [];
+  
   return (
     <div>
       <h2 className="text-lg font-bold mb-2">Ingredients</h2>
-      {ingredients.length > 0 ? (
+      {safeIngredients.length > 0 ? (
         <ul className="space-y-2">
-          {ingredients.map((ingredient, index) => (
+          {safeIngredients.map((ingredient, index) => (
             <li key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
               <span>{ingredient}</span>
             </li>
