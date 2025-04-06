@@ -8,9 +8,17 @@ export interface RecipeUrlInputProps {
   initialUrl?: string;
   onImageUrl?: (url: string) => void;
   onRecipeUrl?: (url: string) => void;
+  disabled?: boolean;
+  onScrapedData?: (data: { title?: string; ingredients?: string; imageUrl?: string }) => void;
 }
 
-const RecipeUrlInput = ({ initialUrl = '', onImageUrl, onRecipeUrl }: RecipeUrlInputProps) => {
+const RecipeUrlInput = ({ 
+  initialUrl = '', 
+  onImageUrl, 
+  onRecipeUrl,
+  disabled = false,
+  onScrapedData
+}: RecipeUrlInputProps) => {
   const [url, setUrl] = useState(initialUrl);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +47,15 @@ const RecipeUrlInput = ({ initialUrl = '', onImageUrl, onRecipeUrl }: RecipeUrlI
         onImageUrl('https://source.unsplash.com/random/300x200/?food');
       }
       
+      // If we need to pass extracted data back
+      if (onScrapedData) {
+        onScrapedData({
+          title: "Example Recipe",
+          ingredients: "Ingredient 1\nIngredient 2\nIngredient 3",
+          imageUrl: 'https://source.unsplash.com/random/300x200/?food'
+        });
+      }
+      
     } catch (err) {
       setError('Failed to import recipe');
       console.error(err);
@@ -56,10 +73,11 @@ const RecipeUrlInput = ({ initialUrl = '', onImageUrl, onRecipeUrl }: RecipeUrlI
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           className="flex-1"
+          disabled={disabled || isLoading}
         />
         <Button 
           onClick={handleImport} 
-          disabled={isLoading}
+          disabled={disabled || isLoading}
           size="sm"
         >
           <LinkIcon className="h-4 w-4 mr-1" />
