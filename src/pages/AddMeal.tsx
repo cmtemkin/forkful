@@ -86,22 +86,18 @@ const AddMeal = () => {
         }
       }
       
-      console.log('Creating meal with data:', {
+      const mealData = {
         title: title.trim(),
         ingredients: processedIngredients,
         image_path: finalImageUrl || null,
         meal_type: mealType,
         day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon'
-      });
+      };
+      
+      console.log('Creating meal with data:', mealData);
       
       // Create new meal in Supabase
-      await createMeal({
-        title: title.trim(),
-        ingredients: processedIngredients,
-        image_path: finalImageUrl || null,
-        meal_type: mealType,
-        day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon'
-      });
+      await createMeal(mealData);
       
       toast({
         title: "Success!",
@@ -148,7 +144,9 @@ const AddMeal = () => {
       
       {error && (
         <Alert className="m-4 border-red-200 bg-red-50">
-          <AlertDescription className="text-red-700">{error}</AlertDescription>
+          <AlertDescription className="text-red-700">
+            {error}
+          </AlertDescription>
         </Alert>
       )}
       

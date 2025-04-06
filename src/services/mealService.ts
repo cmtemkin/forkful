@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Meal {
@@ -16,7 +17,7 @@ export interface Meal {
   user_vote?: 'upvote' | 'downvote' | null;
 }
 
-// Create a new meal - completely removed household references
+// Create a new meal - completely removed all household concepts
 export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<Meal> => {
   const { data: userData } = await supabase.auth.getUser();
   
@@ -26,7 +27,9 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
   
   const mealData = {
     ...meal,
-    created_by: userData.user.id
+    created_by: userData.user.id,
+    // Explicitly set household_id to null to avoid any RLS policy issues
+    household_id: null
   };
   
   console.log('Creating meal with data:', mealData);
@@ -40,7 +43,11 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
 
     if (error) {
       console.error('Error creating meal:', error);
-      throw error;
+      throw new Error(`Failed to create meal: ${error.message} (${error.code})`);
+    }
+
+    if (!data) {
+      throw new Error('No data returned after meal creation');
     }
 
     return data;
@@ -50,7 +57,7 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
   }
 };
 
-// Get all meals for the current user
+// Get all meals for the current user - no household filtering
 export const getHouseholdMeals = async (): Promise<Meal[]> => {
   // Get user ID for the current user
   const { data: userData } = await supabase.auth.getUser();
@@ -59,7 +66,7 @@ export const getHouseholdMeals = async (): Promise<Meal[]> => {
   
   const userId = userData.user.id;
 
-  // Get all meals (regardless of household)
+  // Get all meals created by this user
   const { data: meals, error } = await supabase
     .from('meals')
     .select(`
@@ -74,11 +81,12 @@ export const getHouseholdMeals = async (): Promise<Meal[]> => {
       created_at,
       updated_at
     `)
+    .eq('created_by', userId)
     .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching meals:', error);
-    throw error;
+    throw new Error(`Error fetching meals: ${error.message}`);
   }
 
   // If no meals were found, return an empty array
@@ -154,7 +162,7 @@ export const getMealById = async (id: string): Promise<Meal> => {
 
   if (error) {
     console.error('Error fetching meal:', error);
-    throw error;
+    throw new Error(`Error fetching meal: ${error.message}`);
   }
 
   // Get upvotes count manually
@@ -198,7 +206,7 @@ export const updateMeal = async (id: string, updates: Partial<Meal>): Promise<Me
 
   if (error) {
     console.error('Error updating meal:', error);
-    throw error;
+    throw new Error(`Error updating meal: ${error.message}`);
   }
 
   return data;
@@ -213,7 +221,7 @@ export const deleteMeal = async (id: string): Promise<void> => {
 
   if (error) {
     console.error('Error deleting meal:', error);
-    throw error;
+    throw new Error(`Error deleting meal: ${error.message}`);
   }
 };
 
@@ -234,7 +242,7 @@ export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'):
   
   if (checkError && checkError.code !== 'PGRST116') {
     console.error('Error checking existing vote:', checkError);
-    throw checkError;
+    throw new Error(`Error checking existing vote: ${checkError.message}`);
   }
 
   // If vote already exists, update it
@@ -246,7 +254,7 @@ export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'):
 
     if (error) {
       console.error('Error updating vote:', error);
-      throw error;
+      throw new Error(`Error updating vote: ${error.message}`);
     }
   } else {
     // Otherwise, insert a new vote
@@ -260,7 +268,7 @@ export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'):
 
     if (error) {
       console.error('Error creating vote:', error);
-      throw error;
+      throw new Error(`Error creating vote: ${error.message}`);
     }
   }
 };
@@ -281,12 +289,18 @@ export const removeVote = async (mealId: string): Promise<void> => {
 
   if (error) {
     console.error('Error removing vote:', error);
-    throw error;
+    throw new Error(`Error removing vote: ${error.message}`);
   }
 };
 
 // Get meals by day and meal type
 export const getMealsByDayAndType = async (day: string, mealType: string): Promise<Meal[]> => {
+  const { data: userData } = await supabase.auth.getUser();
+  
+  if (!userData.user) throw new Error('User not authenticated');
+  
+  const userId = userData.user.id;
+
   const { data: meals, error } = await supabase
     .from('meals')
     .select(`
@@ -303,11 +317,12 @@ export const getMealsByDayAndType = async (day: string, mealType: string): Promi
     `)
     .eq('day', day)
     .eq('meal_type', mealType)
+    .eq('created_by', userId)
     .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching meals by day and type:', error);
-    throw error;
+    throw new Error(`Error fetching meals by day and type: ${error.message}`);
   }
   
   // Get vote counts for each meal
