@@ -21,7 +21,7 @@ const EditMealHeader = ({ id, isLoading, onSave }: EditMealHeaderProps) => {
       <button 
         onClick={onSave}
         disabled={isLoading}
-        className="text-black hover:text-black/80 bg-gray-100 px-3 py-1 rounded-md transition-colors"
+        className="text-black bg-gray-100 px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
       >
         <Save className="h-6 w-6 text-primary-coral" strokeWidth={2.5} />
       </button>
