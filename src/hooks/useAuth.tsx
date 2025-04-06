@@ -16,6 +16,8 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   profileData: ProfileData | null;
   setUserProfileData: (data: ProfileData) => void;
+  error: string | null;
+  clearError: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,7 +26,9 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => {},
   profileData: null,
-  setUserProfileData: () => {}
+  setUserProfileData: () => {},
+  error: null,
+  clearError: () => {}
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -32,18 +36,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log('Auth state change event:', event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
         
         // Fetch profile data when user logs in
         if (currentSession?.user && event === 'SIGNED_IN') {
-          fetchProfileData(currentSession.user.id);
+          // Use setTimeout to prevent potential lockups with Supabase auth
+          setTimeout(() => {
+            fetchProfileData(currentSession.user.id);
+          }, 0);
         }
         
         // Clear profile data on sign out
@@ -55,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log('Got existing session:', currentSession ? 'yes' : 'no');
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       
@@ -97,11 +107,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error signing out:', err);
+      setError('Failed to sign out. Please try again.');
+    }
   };
   
   const setUserProfileData = (data: ProfileData) => {
     setProfileData(data);
+  };
+
+  const clearError = () => {
+    setError(null);
   };
 
   const value = {
@@ -110,7 +129,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loading,
     signOut,
     profileData,
-    setUserProfileData
+    setUserProfileData,
+    error,
+    clearError
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

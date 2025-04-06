@@ -134,46 +134,41 @@ const MealCard = ({
             {mealTypeBadge}
           </div>
           
-          {/* Interactions Area */}
-          <div className="flex justify-between items-center">
-            {/* Voting Controls */}
-            <div className="flex items-center gap-3">
-              <button 
-                className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-                  userVote === 'up' ? 'bg-pistachio-green/20' : ''
-                }`}
-                onClick={handleUpvote}
-              >
-                <ThumbsUp className="h-5 w-5 text-pistachio-green" />
-                <span className="text-sm font-medium">{localUpvotes}</span>
-              </button>
-              
-              <button 
-                className={`flex items-center gap-1 px-2 py-1 rounded-full ${
-                  userVote === 'down' ? 'bg-primary-coral/20' : ''
-                }`}
-                onClick={handleDownvote}
-              >
-                <ThumbsDown className="h-5 w-5 text-primary-coral" />
-                <span className="text-sm font-medium">{localDownvotes}</span>
-              </button>
+          {/* Position the Pick button absolutely in the top right corner */}
+          {onTogglePick && (
+            <div 
+              className="absolute top-0 right-0" 
+              onClick={handlePickToggle}
+            >
+              <PickMealButton 
+                isPicked={isPicked} 
+                onTogglePick={() => {}} 
+              />
             </div>
+          )}
+          
+          {/* Interactions Area */}
+          <div className="flex items-center gap-3">
+            {/* Voting Controls */}
+            <button 
+              className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                userVote === 'up' ? 'bg-pistachio-green/20' : ''
+              }`}
+              onClick={handleUpvote}
+            >
+              <ThumbsUp className="h-5 w-5 text-pistachio-green" />
+              <span className="text-sm font-medium">{localUpvotes}</span>
+            </button>
             
-            {/* Pick Button */}
-            {onTogglePick && (
-              <div 
-                className="absolute bottom-0 right-0" 
-                onClick={handlePickToggle}
-              >
-                <div className="w-12 h-12 flex items-center justify-center">
-                  <PickMealButton 
-                    isPicked={isPicked} 
-                    onTogglePick={() => {}} 
-                    disabled={true}
-                  />
-                </div>
-              </div>
-            )}
+            <button 
+              className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                userVote === 'down' ? 'bg-primary-coral/20' : ''
+              }`}
+              onClick={handleDownvote}
+            >
+              <ThumbsDown className="h-5 w-5 text-primary-coral" />
+              <span className="text-sm font-medium">{localDownvotes}</span>
+            </button>
           </div>
         </div>
       </motion.div>
