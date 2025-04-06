@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { format, isToday, isSameDay } from 'date-fns';
-import { useCalendar } from '@/contexts/CalendarContext';
+import { useCalendar, MealType } from '@/contexts/CalendarContext';
 import MealCard from './MealCard';
 import { Link } from 'react-router-dom';
 
