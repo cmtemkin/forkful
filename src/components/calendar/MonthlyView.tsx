@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { format, getDaysInMonth, startOfMonth, isSameDay, isToday, addDays, addMonths, subMonths } from 'date-fns';
 import { useCalendar } from '@/contexts/CalendarContext';
@@ -89,7 +88,7 @@ const MonthlyView = () => {
                     key={day.toString()}
                     className={`h-16 flex flex-col items-center justify-center border-t border-r ${
                       isSelected 
-                        ? 'bg-chow-primary text-white' 
+                        ? 'bg-primary-coral text-white' 
                         : isCurrentDay 
                           ? 'bg-orange-50' 
                           : 'bg-white hover:bg-gray-50'
@@ -99,8 +98,8 @@ const MonthlyView = () => {
                     <span className={isSelected 
                       ? 'text-sm font-bold text-white' 
                       : isCurrentDay 
-                        ? 'text-sm font-bold text-chow-primary' 
-                        : 'text-sm text-gray-800'}>
+                        ? 'text-sm font-bold text-primary-coral' 
+                        : 'text-sm text-black'}>
                       {format(day, 'd')}
                     </span>
                     {hasMeals && !isSelected && (

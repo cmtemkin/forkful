@@ -36,7 +36,7 @@ const WeeklyView = () => {
               key={day.toString()}
               className={`flex flex-col items-center min-w-[3.5rem] mx-1 rounded-full py-2 px-3 ${
                 isSelected 
-                  ? 'bg-chow-primary text-white' 
+                  ? 'bg-primary-coral text-white' 
                   : isCurrentDay 
                     ? 'bg-gray-100' 
                     : 'bg-white'
