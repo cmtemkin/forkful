@@ -15,6 +15,7 @@ import HouseholdHeader from '@/components/household/HouseholdHeader';
 import MembersList from '@/components/household/MembersList';
 import MealPlanningCards from '@/components/household/MealPlanningCards';
 import HouseholdSettings from '@/components/household/HouseholdSettings';
+import { Construction } from 'lucide-react';
 
 const HouseholdDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,35 +23,46 @@ const HouseholdDetail = () => {
   const { toast } = useToast();
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
-    const loadHousehold = async () => {
-      if (!id) {
-        navigate('/households');
-        return;
-      }
-      
-      try {
-        const householdData = await getHouseholdById(id);
-        setHousehold(householdData);
-        setMembers(householdData.members || []);
-      } catch (error) {
-        console.error('Failed to load household details:', error);
-        toast({
-          title: "Error loading household",
-          description: "Could not load household details. Please try again later.",
-          variant: "destructive"
-        });
-        navigate('/households');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadHousehold();
-  }, [id, navigate, toast]);
+    // Redirect to the households page with the Coming Soon message
+    // since this feature is deprecated
+    navigate('/households');
+  }, [navigate]);
   
+  // Show a simple coming soon view instead of trying to load household data
+  return (
+    <div className="container mx-auto py-8 px-4">
+      <Card className="w-full max-w-lg mx-auto py-12">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Construction className="h-16 w-16 text-primary" />
+          </div>
+          <CardTitle className="text-2xl">Coming Soon</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p className="text-gray-600">
+            We're working on an exciting new Households feature that will allow you to 
+            share meal plans with family and friends.
+          </p>
+          <p className="text-gray-600 mt-4">
+            Check back soon!
+          </p>
+          <button 
+            onClick={() => navigate('/households')}
+            className="mt-6 bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Back to Households
+          </button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+  
+  // All the following code won't be executed due to the early redirect
+  // but we'll comment it out to ensure there are no type errors
+  /*
   const handleAddMember = async (email: string) => {
     if (!id || !email.trim()) {
       toast({
@@ -62,205 +74,53 @@ const HouseholdDetail = () => {
     }
     
     try {
-      await addHouseholdMember(id, email);
-      
-      // Refresh household members
-      const updatedHousehold = await getHouseholdById(id);
-      setMembers(updatedHousehold.members || []);
+      await addHouseholdMember();
       
       toast({
-        title: "Invitation sent",
-        description: `An invitation has been sent to ${email}`,
+        title: "Feature unavailable",
+        description: "The Households feature is coming soon",
       });
     } catch (error) {
       console.error('Failed to add member:', error);
       
-      const errorMsg = error instanceof Error ? error.message : "Please try again later";
-      
       toast({
-        title: "Error inviting member",
-        description: errorMsg,
+        title: "Feature unavailable",
+        description: "The Households feature is coming soon",
         variant: "destructive"
       });
     }
   };
 
-  const handleRemoveMember = async (memberId: string, userId: string) => {
-    if (!id) return;
-    
-    try {
-      await removeHouseholdMember(id, userId);
-      
-      // Update local state
-      setMembers(prev => prev.filter(member => member.id !== memberId));
-      
-      toast({
-        title: "Member removed",
-        description: "The member has been removed from the household",
-      });
-    } catch (error) {
-      console.error('Failed to remove member:', error);
-      
-      toast({
-        title: "Error removing member",
-        description: "Could not remove the member. Please try again later.",
-        variant: "destructive"
-      });
-    }
+  const handleRemoveMember = async () => {
+    toast({
+      title: "Feature unavailable",
+      description: "The Households feature is coming soon",
+    });
   };
   
   const handleDeleteHousehold = async () => {
-    if (!id) return;
-    
-    try {
-      await deleteHousehold(id);
-      
-      toast({
-        title: "Household deleted",
-        description: "The household has been deleted successfully",
-      });
-      
-      navigate('/households');
-    } catch (error) {
-      console.error('Failed to delete household:', error);
-      
-      const errorMsg = error instanceof Error ? error.message : "Please try again later";
-      
-      toast({
-        title: "Error deleting household",
-        description: errorMsg,
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Feature unavailable",
+      description: "The Households feature is coming soon",
+    });
+    navigate('/households');
   };
   
   const handleLeaveHousehold = async () => {
-    if (!id) return;
-    
-    try {
-      await leaveHousehold(id);
-      
-      toast({
-        title: "Left household",
-        description: "You have left the household successfully",
-      });
-      
-      navigate('/households');
-    } catch (error) {
-      console.error('Failed to leave household:', error);
-      
-      toast({
-        title: "Error leaving household",
-        description: "Could not leave the household. Please try again later.",
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Feature unavailable",
+      description: "The Households feature is coming soon",
+    });
+    navigate('/households');
   };
   
   const handleRenameHousehold = async (newName: string) => {
-    if (!id || !newName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a household name",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      await updateHouseholdName(id, newName);
-      
-      // Update local state
-      if (household) {
-        setHousehold({
-          ...household,
-          name: newName
-        });
-      }
-      
-      toast({
-        title: "Household renamed",
-        description: "The household has been renamed successfully",
-      });
-    } catch (error) {
-      console.error('Failed to rename household:', error);
-      
-      const errorMsg = error instanceof Error ? error.message : "Please try again later";
-      
-      toast({
-        title: "Error renaming household",
-        description: errorMsg,
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Feature unavailable",
+      description: "The Households feature is coming soon",
+    });
   };
-  
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-  
-  if (!household) {
-    return (
-      <div className="container mx-auto py-8 px-4 text-center">
-        <h1 className="text-2xl font-bold mb-4">Household not found</h1>
-        <button onClick={() => navigate('/households')}>
-          Back to Households
-        </button>
-      </div>
-    );
-  }
-  
-  // Check if user is admin
-  const isAdmin = members.some(member => 
-    member.user_id === household.created_by && member.role === 'admin'
-  );
-  
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <HouseholdHeader 
-        name={household.name}
-        isAdmin={isAdmin}
-        onInviteMember={handleAddMember}
-        onDeleteHousehold={handleDeleteHousehold}
-      />
-      
-      <Tabs defaultValue="members" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="meals">Meal Planning</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="members">
-          <Card>
-            <CardHeader>
-              <CardTitle>Household Members</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MembersList 
-                members={members}
-                isAdmin={isAdmin}
-                creatorId={household.created_by}
-                onRemoveMember={handleRemoveMember}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="meals">
-          <MealPlanningCards />
-        </TabsContent>
-        
-        <TabsContent value="settings">
-          <HouseholdSettings 
-            householdName={household.name}
-            onRename={handleRenameHousehold}
-            onLeave={handleLeaveHousehold}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
+  */
 };
 
 export default HouseholdDetail;
