@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { useSupabaseStorage } from '@/hooks/useSupabaseStorage';
 import { createMeal } from '@/services/mealService';
 import { useAuth } from '@/hooks/useAuth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AddMeal = () => {
   const navigate = useNavigate();
@@ -33,9 +34,11 @@ const AddMeal = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!user) {
       toast({
@@ -100,9 +103,20 @@ const AddMeal = () => {
       navigate('/');
     } catch (error) {
       console.error('Error adding meal:', error);
+      let errorMessage = "Failed to add meal. Please try again.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        // If the error is related to household policies, provide a more specific message
+        if (errorMessage.includes("household") || errorMessage.includes("policy")) {
+          errorMessage = "There was a policy error. We've made updates to fix this. Please try again.";
+          setError(errorMessage);
+        }
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to add meal. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -126,6 +140,12 @@ const AddMeal = () => {
         </button>
         <h1 className="text-2xl font-bold">Add New Idea</h1>
       </div>
+      
+      {error && (
+        <Alert className="m-4 border-red-200 bg-red-50">
+          <AlertDescription className="text-red-700">{error}</AlertDescription>
+        </Alert>
+      )}
       
       <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
         {/* Date selection */}

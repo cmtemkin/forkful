@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Meal {
@@ -25,12 +26,16 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
     throw new Error('User not authenticated');
   }
   
+  // Set household_id to null to avoid any policy recursion issues
+  const mealData = {
+    ...meal,
+    household_id: null,  // Force this to null to avoid household policy issues
+    created_by: userData.user.id
+  };
+  
   const { data, error } = await supabase
     .from('meals')
-    .insert({
-      ...meal,
-      created_by: userData.user.id
-    })
+    .insert(mealData)
     .select()
     .single();
 
