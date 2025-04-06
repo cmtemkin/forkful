@@ -37,6 +37,7 @@ const AddMeal = () => {
   const [recipeUrl, setRecipeUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isScraping, setIsScraping] = useState(false);
+  const [lastScrapedUrl, setLastScrapedUrl] = useState("");
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,14 +56,24 @@ const AddMeal = () => {
   const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value;
     setRecipeUrl(url);
-    
-    // Only attempt to scrape if the URL is reasonably valid
-    if (url && url.includes('http') && (url.includes('.com') || url.includes('.org') || url.includes('.net'))) {
-      await scrapeRecipeData(url);
+  };
+  
+  const handleUrlBlur = async () => {
+    // Only attempt to scrape if the URL is reasonably valid and different from last scraped URL
+    if (
+      recipeUrl && 
+      recipeUrl.includes('http') && 
+      (recipeUrl.includes('.com') || recipeUrl.includes('.org') || recipeUrl.includes('.net')) &&
+      recipeUrl !== lastScrapedUrl
+    ) {
+      await scrapeRecipeData(recipeUrl);
+      setLastScrapedUrl(recipeUrl);
     }
   };
   
   const scrapeRecipeData = async (url: string) => {
+    if (isScraping) return; // Prevent multiple scraping attempts
+    
     setIsScraping(true);
     
     try {
@@ -162,6 +173,7 @@ const AddMeal = () => {
             <Input
               value={recipeUrl}
               onChange={handleUrlChange}
+              onBlur={handleUrlBlur}
               placeholder="Paste a link to automatically fetch details"
               type="url"
               disabled={isScraping}
@@ -193,7 +205,7 @@ const AddMeal = () => {
         {imageUrl && (
           <div>
             <label className="block text-sm font-medium mb-1">Recipe Image</label>
-            <div className="w-full aspect-square max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden">
+            <div className="w-full aspect-video max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden">
               <img 
                 src={imageUrl} 
                 alt={title || "Recipe"} 
