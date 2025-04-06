@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2, ShoppingCart, Edit, Calendar } from 'lucide-react';
@@ -39,8 +38,8 @@ const MealDetail = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   
   useEffect(() => {
-    // Get meal from localStorage
-    const storedMeals = localStorage.getItem('chowdown_meals');
+    // Get meal from localStorage - check forkful_meals first, then fall back to chowdown_meals
+    const storedMeals = localStorage.getItem('forkful_meals') || localStorage.getItem('chowdown_meals');
     if (storedMeals) {
       const allMeals = JSON.parse(storedMeals);
       const foundMeal = allMeals.find((m: any) => m.id === id);
@@ -75,13 +74,13 @@ const MealDetail = () => {
     setIsLocked(!isLocked);
     
     // Update the meal in localStorage
-    const storedMeals = localStorage.getItem('chowdown_meals');
+    const storedMeals = localStorage.getItem('forkful_meals') || localStorage.getItem('chowdown_meals');
     if (storedMeals && meal) {
       const allMeals = JSON.parse(storedMeals);
       const updatedMeals = allMeals.map((m: any) => 
         m.id === id ? { ...m, isLocked: !isLocked } : m
       );
-      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+      localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
     }
   };
   
@@ -99,13 +98,13 @@ const MealDetail = () => {
     setMeal(updatedMeal);
     
     // Update the meal in localStorage
-    const storedMeals = localStorage.getItem('chowdown_meals');
+    const storedMeals = localStorage.getItem('forkful_meals') || localStorage.getItem('chowdown_meals');
     if (storedMeals) {
       const allMeals = JSON.parse(storedMeals);
       const updatedMeals = allMeals.map((m: any) => 
         m.id === id ? { ...m, day: newDay } : m
       );
-      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+      localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
       
       toast({
         title: "Date updated",
@@ -125,8 +124,8 @@ const MealDetail = () => {
     }
     
     // Get current grocery list from localStorage or initialize with empty array
-    const existingList = localStorage.getItem('chowdown_groceries');
-    const groceryList = existingList ? JSON.parse(existingList) : [];
+    const existingList = localStorage.getItem('forkful_groceries') || localStorage.getItem('chowdown_groceries') || '[]';
+    const groceryList = JSON.parse(existingList);
     
     // Process all ingredients, ensuring they are individual items
     const processedIngredients = meal.ingredients.flatMap((ingredient: string) => {
@@ -161,7 +160,7 @@ const MealDetail = () => {
     const updatedList = [...groceryList, ...newItems];
     
     // Save to localStorage
-    localStorage.setItem('chowdown_groceries', JSON.stringify(updatedList));
+    localStorage.setItem('forkful_groceries', JSON.stringify(updatedList));
     
     toast({
       title: "Added to grocery list",
@@ -171,11 +170,11 @@ const MealDetail = () => {
   
   const handleDeleteMeal = () => {
     // Remove the meal from localStorage
-    const storedMeals = localStorage.getItem('chowdown_meals');
+    const storedMeals = localStorage.getItem('forkful_meals') || localStorage.getItem('chowdown_meals');
     if (storedMeals) {
       const allMeals = JSON.parse(storedMeals);
       const updatedMeals = allMeals.filter((m: any) => m.id !== id);
-      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+      localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
     }
     
     toast({
@@ -293,13 +292,13 @@ const MealDetail = () => {
   };
   
   const updateVotesInStorage = (upvotes: number, downvotes: number) => {
-    const storedMeals = localStorage.getItem('chowdown_meals');
+    const storedMeals = localStorage.getItem('forkful_meals') || localStorage.getItem('chowdown_meals');
     if (storedMeals && meal) {
       const allMeals = JSON.parse(storedMeals);
       const updatedMeals = allMeals.map((m: any) => 
         m.id === id ? { ...m, upvotes, downvotes } : m
       );
-      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+      localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
     }
   };
   

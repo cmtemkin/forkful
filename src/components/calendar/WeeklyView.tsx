@@ -78,15 +78,13 @@ const WeeklyView = () => {
               </div>
               
               {topMeal ? (
-                <Link to={`/meal/${topMeal.id}`}>
-                  <MealCard 
-                    id={topMeal.id}
-                    title={topMeal.title}
-                    image={topMeal.image}
-                    upvotes={topMeal.upvotes || 0}
-                    isLocked={topMeal.isLocked}
-                  />
-                </Link>
+                <MealCard 
+                  id={topMeal.id}
+                  title={topMeal.title}
+                  image={topMeal.image}
+                  upvotes={topMeal.upvotes || 0}
+                  isLocked={topMeal.isLocked}
+                />
               ) : (
                 <Link
                   to={`/add-meal?mealType=${mealType}&day=${format(currentDate, 'EEEE')}`}
