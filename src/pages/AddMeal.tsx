@@ -91,7 +91,8 @@ const AddMeal = () => {
         ingredients: processedIngredients,
         image_path: finalImageUrl || null,
         meal_type: mealType,
-        day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon'
+        day: date ? format(date, 'EEEE') : 'Monday',
+        source_url: null
       };
       
       console.log('Creating meal with data:', mealData);

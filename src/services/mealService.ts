@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Meal {
@@ -233,7 +234,12 @@ export const updateMeal = async (id: string, updates: Partial<Meal>): Promise<Me
     throw new Error(`Error updating meal: ${error.message}`);
   }
 
-  return data;
+  // Make sure to include default values for upvotes and downvotes
+  return {
+    ...data,
+    upvotes: data.upvotes || 0,
+    downvotes: data.downvotes || 0
+  };
 };
 
 // Delete a meal
@@ -396,5 +402,6 @@ export const getMealsByDayAndType = async (day: string, mealType: string): Promi
     });
   }
 
-  return meals || [];
+  return meals ? meals.map(meal => ({...meal, upvotes: 0, downvotes: 0})) : [];
 };
+
