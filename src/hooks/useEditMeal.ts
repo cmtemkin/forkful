@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
+import { getMealById, updateMeal } from '@/services/mealService';
 
 interface FormValues {
   title: string;
@@ -24,46 +25,54 @@ export const useEditMeal = (id: string | undefined) => {
   
   useEffect(() => {
     // Load existing meal data
-    const storedMeals = localStorage.getItem('forkful_meals');
-    if (storedMeals && id) {
-      const meals = JSON.parse(storedMeals);
-      const meal = meals.find((m: any) => m.id === id);
+    const fetchMeal = async () => {
+      if (!id) return;
       
-      if (meal) {
-        setOriginalMeal(meal);
-        setValue('title', meal.title);
-        setValue('mealType', meal.mealType);
-        setValue('ingredients', Array.isArray(meal.ingredients) ? meal.ingredients.join('\n') : '');
-        setValue('sourceUrl', meal.sourceUrl || '');
-        setValue('image', meal.image || '');
-        setValue('day', meal.day || 'Monday');
+      try {
+        setIsLoading(true);
+        const meal = await getMealById(id);
         
-        // Convert day string to date if possible
-        try {
-          const today = new Date();
-          const dayMap: {[key: string]: number} = {
-            'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 0
-          };
-          if (meal.day && dayMap[meal.day] !== undefined) {
-            const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            let daysToAdd = dayMap[meal.day] - currentDay;
-            if (daysToAdd <= 0) daysToAdd += 7; // If it's in the past, go to next week
-            const mealDate = new Date(today);
-            mealDate.setDate(today.getDate() + daysToAdd);
-            setDate(mealDate);
+        if (meal) {
+          setOriginalMeal(meal);
+          setValue('title', meal.title);
+          setValue('mealType', meal.meal_type);
+          setValue('ingredients', Array.isArray(meal.ingredients) ? meal.ingredients.join('\n') : '');
+          setValue('sourceUrl', meal.source_url || '');
+          setValue('image', meal.image_path || '');
+          setValue('day', meal.day || 'Monday');
+          
+          // Convert day string to date if possible
+          try {
+            const today = new Date();
+            const dayMap: {[key: string]: number} = {
+              'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 0
+            };
+            if (meal.day && dayMap[meal.day] !== undefined) {
+              const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+              let daysToAdd = dayMap[meal.day] - currentDay;
+              if (daysToAdd <= 0) daysToAdd += 7; // If it's in the past, go to next week
+              const mealDate = new Date(today);
+              mealDate.setDate(today.getDate() + daysToAdd);
+              setDate(mealDate);
+            }
+          } catch (error) {
+            console.error("Error setting date from day", error);
           }
-        } catch (error) {
-          console.error("Error setting date from day", error);
         }
-      } else {
+      } catch (error) {
+        console.error("Error loading meal:", error);
         toast({
           title: "Meal not found",
-          description: "We couldn't find the meal you're trying to edit.",
+          description: error instanceof Error ? error.message : "We couldn't find the meal you're trying to edit.",
           variant: "destructive"
         });
         navigate('/');
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
+    
+    fetchMeal();
   }, [id, setValue, navigate, toast]);
   
   const handleDateChange = (newDate: Date | undefined) => {
@@ -86,7 +95,7 @@ export const useEditMeal = (id: string | undefined) => {
   };
   
   const onSubmit = async (data: FormValues) => {
-    if (isLoading) return;
+    if (isLoading || !id) return;
     
     setIsLoading(true);
     
@@ -97,28 +106,15 @@ export const useEditMeal = (id: string | undefined) => {
         .map(item => item.trim())
         .filter(item => item !== '');
       
-      // Update meal in localStorage
-      const storedMeals = localStorage.getItem('forkful_meals');
-      if (storedMeals && id) {
-        const meals = JSON.parse(storedMeals);
-        const updatedMeals = meals.map((meal: any) => {
-          if (meal.id === id) {
-            return {
-              ...meal,
-              title: data.title,
-              mealType: data.mealType,
-              ingredients,
-              sourceUrl: data.sourceUrl,
-              image: data.image,
-              day: data.day,
-              lastUpdated: new Date().toISOString()
-            };
-          }
-          return meal;
-        });
-        
-        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
-      }
+      // Update meal
+      await updateMeal(id, {
+        title: data.title,
+        meal_type: data.mealType,
+        ingredients,
+        source_url: data.sourceUrl,
+        image_path: data.image,
+        day: data.day
+      });
       
       toast({
         title: "Changes saved",
@@ -132,7 +128,7 @@ export const useEditMeal = (id: string | undefined) => {
       
       toast({
         title: "Error saving changes",
-        description: "An error occurred while saving your changes. Please try again.",
+        description: error instanceof Error ? error.message : "An error occurred while saving your changes. Please try again.",
         variant: "destructive"
       });
     } finally {

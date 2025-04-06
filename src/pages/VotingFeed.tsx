@@ -5,67 +5,8 @@ import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
 import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
-
-// Sample data - in a real app, this would come from an API
-const mockMeals = [
-  {
-    id: '1',
-    title: 'Chicken Alfredo',
-    submittedBy: 'Sarah',
-    image: 'https://source.unsplash.com/photo-1645112411341-6c4fd023882a',
-    upvotes: 5,
-    downvotes: 2,
-    day: 'Monday',
-    mealType: 'Dinner',
-    ingredients: ['Chicken', 'Fettuccine', 'Heavy Cream', 'Parmesan Cheese']
-  },
-  {
-    id: '2',
-    title: 'BBQ Meatloaf',
-    submittedBy: 'David',
-    image: 'https://source.unsplash.com/photo-1544025162-d76694265947',
-    upvotes: 3,
-    downvotes: 1,
-    day: 'Monday',
-    mealType: 'Dinner',
-    ingredients: ['Ground Beef', 'BBQ Sauce', 'Breadcrumbs', 'Onion']
-  },
-  {
-    id: '3',
-    title: 'Vegetable Stir-Fry',
-    submittedBy: 'Emily',
-    image: 'https://source.unsplash.com/photo-1563379926898-05f4575a45d8',
-    upvotes: 2,
-    downvotes: 4,
-    day: 'Monday',
-    mealType: 'Dinner',
-    ingredients: ['Broccoli', 'Carrots', 'Bell Peppers', 'Soy Sauce', 'Rice']
-  }
-];
-
-// Get the stored meals from localStorage or use the mock data
-const getInitialMeals = () => {
-  try {
-    const storedMeals = localStorage.getItem('forkful_meals');
-    const meals = storedMeals ? JSON.parse(storedMeals) : mockMeals;
-    
-    // Ensure all meals have the required properties
-    return meals.map(meal => ({
-      id: meal.id || `meal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      title: meal.title || 'Untitled Meal',
-      submittedBy: meal.submittedBy || 'Anonymous',
-      image: meal.image || '',
-      upvotes: typeof meal.upvotes === 'number' ? meal.upvotes : 0,
-      downvotes: typeof meal.downvotes === 'number' ? meal.downvotes : 0,
-      day: meal.day || 'Monday',
-      mealType: meal.mealType || 'Dinner',
-      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
-    }));
-  } catch (error) {
-    console.error('Error parsing meals from localStorage:', error);
-    return mockMeals;
-  }
-};
+import { getHouseholdMeals } from '@/services/mealService';
+import { useToast } from '@/hooks/use-toast';
 
 // Function to get meal type icon
 const getMealTypeIcon = (mealType: string) => {
@@ -82,33 +23,31 @@ const getMealTypeIcon = (mealType: string) => {
 };
 
 const VotingFeed = () => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedFilter, setSelectedFilter] = useState('By Date');
-  const [meals, setMeals] = useState(getInitialMeals);
+  const [meals, setMeals] = useState<any[]>([]);
+  const { toast } = useToast();
   
   useEffect(() => {
-    // Update localStorage whenever meals change
-    localStorage.setItem('forkful_meals', JSON.stringify(meals));
-  }, [meals]);
-
-  useEffect(() => {
-    // Migrate old data if it exists
-    const oldStoredMeals = localStorage.getItem('chowdown_meals');
-    if (oldStoredMeals && !localStorage.getItem('forkful_meals')) {
+    const fetchMeals = async () => {
       try {
-        const parsedMeals = JSON.parse(oldStoredMeals);
-        // Ensure all required properties are present
-        const migratedMeals = parsedMeals.map(meal => ({
-          ...meal,
-          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
-        }));
-        localStorage.setItem('forkful_meals', JSON.stringify(migratedMeals));
-        setMeals(migratedMeals);
+        setIsLoading(true);
+        const fetchedMeals = await getHouseholdMeals();
+        setMeals(fetchedMeals);
       } catch (error) {
-        console.error('Error migrating old meals data:', error);
+        console.error('Error fetching meals:', error);
+        toast({
+          title: "Error loading meals",
+          description: error instanceof Error ? error.message : "Could not load your meal ideas. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
+    };
+    
+    fetchMeals();
+  }, [toast]);
 
   const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter);
@@ -119,7 +58,7 @@ const VotingFeed = () => {
       sortedMeals.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
     } else {
       // By Date - use the original order or sort by date if available
-      sortedMeals.sort((a, b) => a.id.localeCompare(b.id));
+      sortedMeals.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     
     setMeals(sortedMeals);
@@ -169,11 +108,11 @@ const VotingFeed = () => {
               <MealCard
                 id={meal.id}
                 title={meal.title}
-                submittedBy={meal.submittedBy || 'Anonymous'}
-                image={meal.image}
+                submittedBy="You" // Since all meals are user's own
+                image={meal.image_path}
                 upvotes={meal.upvotes}
                 downvotes={meal.downvotes}
-                dayMealtime={`${meal.day} ${meal.mealType}`}
+                dayMealtime={`${meal.day} ${meal.meal_type}`}
                 dayBadge={
                   <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getDayBadgeColor(meal.day)}`}>
                     {meal.day}
@@ -181,8 +120,8 @@ const VotingFeed = () => {
                 }
                 mealTypeBadge={
                   <div className="inline-flex items-center rounded-full bg-warm-white px-2 py-1 text-xs font-medium text-charcoal-gray ml-2">
-                    {getMealTypeIcon(meal.mealType)}
-                    {meal.mealType}
+                    {getMealTypeIcon(meal.meal_type)}
+                    {meal.meal_type}
                   </div>
                 }
               />

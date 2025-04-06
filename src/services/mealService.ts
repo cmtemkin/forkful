@@ -19,7 +19,12 @@ export interface Meal {
 
 // Create a new meal - completely standalone without any household references
 export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<Meal> => {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error(`Authentication error: ${authError.message}`);
+  }
   
   if (!userData.user) {
     throw new Error('User not authenticated');
@@ -34,7 +39,6 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
     meal_type: meal.meal_type,
     day: meal.day,
     created_by: userData.user.id
-    // Explicitly NOT including household_id to avoid any RLS policy issues
   };
   
   console.log('Creating meal with data:', mealData);
@@ -66,7 +70,12 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
 // Get all meals for the current user - no household filtering
 export const getHouseholdMeals = async (): Promise<Meal[]> => {
   // Get user ID for the current user
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error(`Authentication error: ${authError.message}`);
+  }
   
   if (!userData.user) throw new Error('User not authenticated');
   
@@ -143,7 +152,12 @@ export const getHouseholdMeals = async (): Promise<Meal[]> => {
 // Get a single meal by ID with vote counts
 export const getMealById = async (id: string): Promise<Meal> => {
   // Get user ID for the current user
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error(`Authentication error: ${authError.message}`);
+  }
   
   if (!userData.user) throw new Error('User not authenticated');
   
@@ -233,7 +247,12 @@ export const deleteMeal = async (id: string): Promise<void> => {
 
 // Vote on a meal
 export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'): Promise<void> => {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error(`Authentication error: ${authError.message}`);
+  }
   
   if (!userData.user) throw new Error('User not authenticated');
   
@@ -281,7 +300,12 @@ export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'):
 
 // Remove a vote
 export const removeVote = async (mealId: string): Promise<void> => {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error(`Authentication error: ${authError.message}`);
+  }
   
   if (!userData.user) throw new Error('User not authenticated');
   
@@ -301,7 +325,12 @@ export const removeVote = async (mealId: string): Promise<void> => {
 
 // Get meals by day and meal type
 export const getMealsByDayAndType = async (day: string, mealType: string): Promise<Meal[]> => {
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: authError } = await supabase.auth.getUser();
+  
+  if (authError) {
+    console.error('Auth error:', authError);
+    throw new Error(`Authentication error: ${authError.message}`);
+  }
   
   if (!userData.user) throw new Error('User not authenticated');
   
