@@ -3,23 +3,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { getMealById, updateMeal, deleteMeal, voteMeal } from '@/services/mealService';
 
 interface Meal {
   id: string;
   title: string;
-  image_path?: string;
+  image?: string;
   day: string;
-  meal_type: string;
+  mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
   ingredients: string[];
   isLocked?: boolean;
   upvotes: number;
   downvotes: number;
-  source_url?: string;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  user_vote?: 'upvote' | 'downvote' | null;
+  submittedBy?: string;
+  dateAdded?: string;
 }
 
 export function useMealDetails(id: string | undefined) {
@@ -39,58 +35,38 @@ export function useMealDetails(id: string | undefined) {
   const [editImage, setEditImage] = useState('');
   
   useEffect(() => {
-    const fetchMeal = async () => {
-      if (!id) {
-        setError('No meal ID provided');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        setLoading(true);
-        const fetchedMeal = await getMealById(id);
+    try {
+      const storedMeals = localStorage.getItem('forkful_meals');
+      if (storedMeals) {
+        const meals = JSON.parse(storedMeals) as Meal[];
+        const foundMeal = meals.find(m => m.id === id);
         
-        if (fetchedMeal) {
-          // Ensure all required properties exist with default values if needed
-          const mealWithLockStatus: Meal = {
-            ...fetchedMeal,
-            isLocked: false, // We don't store lock status in DB yet
-            upvotes: fetchedMeal.upvotes || 0,
-            downvotes: fetchedMeal.downvotes || 0
-          };
+        if (foundMeal) {
+          setMeal(foundMeal);
           
-          setMeal(mealWithLockStatus);
-          
-          setEditTitle(fetchedMeal.title);
-          setEditMealType(validateMealType(fetchedMeal.meal_type));
-          setEditDate(fetchedMeal.day ? parseDayToDate(fetchedMeal.day) : undefined);
-          setEditIngredients(fetchedMeal.ingredients ? fetchedMeal.ingredients.join('\n') : '');
-          setEditImage(fetchedMeal.image_path || '');
+          setEditTitle(foundMeal.title);
+          setEditMealType(foundMeal.mealType);
+          setEditDate(foundMeal.day ? parseDayToDate(foundMeal.day) : undefined);
+          // Ensure ingredients array exists before joining
+          setEditIngredients(foundMeal.ingredients ? foundMeal.ingredients.join('\n') : '');
+          setEditImage(foundMeal.image || '');
         } else {
           setError('Meal not found');
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error loading meal data');
-        console.error(err);
-      } finally {
-        setLoading(false);
+      } else {
+        setError('No meals found');
       }
-    };
-    
-    fetchMeal();
+    } catch (err) {
+      setError('Error loading meal data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
-  
-  // Helper function to validate meal type
-  const validateMealType = (mealType: string): 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks' => {
-    const validTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
-    return validTypes.includes(mealType) 
-      ? mealType as 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks'
-      : 'Dinner'; // Default fallback
-  };
   
   const parseDayToDate = (day: string): Date => {
     const today = new Date();
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dayIndex = daysOfWeek.indexOf(day);
     
     if (dayIndex >= 0) {
@@ -108,19 +84,24 @@ export function useMealDetails(id: string | undefined) {
     if (!meal) return;
     
     try {
-      const updatedMeal: Meal = { 
-        ...meal,
-        isLocked: !meal.isLocked
-      };
-      
-      setMeal(updatedMeal);
-      
-      toast({
-        title: meal.isLocked ? "Meal unlocked" : "Meal locked",
-        description: meal.isLocked 
-          ? "This meal can now be changed" 
-          : "This meal is now locked and will appear in your grocery list",
-      });
+      const storedMeals = localStorage.getItem('forkful_meals');
+      if (storedMeals) {
+        const meals = JSON.parse(storedMeals) as Meal[];
+        const updatedMeals = meals.map(m => 
+          m.id === id ? { ...m, isLocked: !m.isLocked } : m
+        );
+        
+        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        
+        setMeal({ ...meal, isLocked: !meal.isLocked });
+        
+        toast({
+          title: meal.isLocked ? "Meal unlocked" : "Meal locked",
+          description: meal.isLocked 
+            ? "This meal can now be changed" 
+            : "This meal is now locked and will appear in your grocery list",
+        });
+      }
     } catch (err) {
       console.error(err);
       toast({
@@ -131,107 +112,121 @@ export function useMealDetails(id: string | undefined) {
     }
   };
   
-  const handleVote = async (isUpvote: boolean) => {
-    if (!meal || !id) return;
+  const handleVote = (isUpvote: boolean) => {
+    if (!meal) return;
     
     try {
-      await voteMeal(id, isUpvote ? 'upvote' : 'downvote');
-      
-      setMeal(prev => {
-        if (!prev) return null;
-        if (isUpvote) {
-          return { ...prev, upvotes: prev.upvotes + 1 };
-        } else {
-          return { ...prev, downvotes: prev.downvotes + 1 };
-        }
-      });
-      
-      toast({
-        title: isUpvote ? "Upvoted" : "Downvoted",
-        description: `You've ${isUpvote ? 'upvoted' : 'downvoted'} this meal.`,
-      });
+      const storedMeals = localStorage.getItem('forkful_meals');
+      if (storedMeals) {
+        const meals = JSON.parse(storedMeals) as Meal[];
+        const updatedMeals = meals.map(m => {
+          if (m.id === id) {
+            if (isUpvote) {
+              return { ...m, upvotes: m.upvotes + 1 };
+            } else {
+              return { ...m, downvotes: m.downvotes + 1 };
+            }
+          }
+          return m;
+        });
+        
+        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        
+        setMeal(prev => {
+          if (!prev) return null;
+          if (isUpvote) {
+            return { ...prev, upvotes: prev.upvotes + 1 };
+          } else {
+            return { ...prev, downvotes: prev.downvotes + 1 };
+          }
+        });
+        
+        toast({
+          title: isUpvote ? "Upvoted" : "Downvoted",
+          description: `You've ${isUpvote ? 'upvoted' : 'downvoted'} this meal.`,
+        });
+      }
     } catch (err) {
       console.error(err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to register vote",
+        description: "Failed to register vote",
         variant: "destructive"
       });
     }
   };
   
-  const handleSaveEdits = async () => {
-    if (!meal || !id) return;
+  const handleSaveEdits = () => {
+    if (!meal) return;
     
     try {
-      setLoading(true);
-      
-      const processedIngredients = editIngredients
-        .split(/[\n,]+/)
-        .map(item => item.trim())
-        .filter(item => item !== '');
-      
-      const updatedMeal = {
-        title: editTitle,
-        meal_type: editMealType,
-        day: editDate ? format(editDate, 'EEEE') : meal.day,
-        ingredients: processedIngredients,
-        image_path: editImage
-      };
-      
-      const result = await updateMeal(id, updatedMeal);
-      
-      // Make sure we preserve the lock status that might not be in the database
-      // Ensure all required properties exist with default values
-      const updatedFullMeal: Meal = {
-        ...result,
-        upvotes: result.upvotes || meal.upvotes || 0,
-        downvotes: result.downvotes || meal.downvotes || 0,
-        isLocked: meal.isLocked
-      };
-      
-      setMeal(updatedFullMeal);
-      
-      setIsEditing(false);
-      
-      toast({
-        title: "Changes saved",
-        description: "Your changes to this meal have been saved.",
-      });
+      const storedMeals = localStorage.getItem('forkful_meals');
+      if (storedMeals) {
+        const meals = JSON.parse(storedMeals) as Meal[];
+        
+        const processedIngredients = editIngredients
+          .split(/[\n,]+/)
+          .map(item => item.trim())
+          .filter(item => item !== '');
+        
+        const updatedMeal = {
+          ...meal,
+          title: editTitle,
+          mealType: editMealType,
+          day: editDate ? format(editDate, 'EEEE').substring(0, 3) as any : meal.day,
+          ingredients: processedIngredients,
+          image: editImage
+        };
+        
+        const updatedMeals = meals.map(m => 
+          m.id === id ? updatedMeal : m
+        );
+        
+        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        
+        setMeal(updatedMeal);
+        setIsEditing(false);
+        
+        toast({
+          title: "Changes saved",
+          description: "Your changes to this meal have been saved.",
+        });
+      }
     } catch (err) {
       console.error(err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to save changes",
+        description: "Failed to save changes",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
   
-  const handleDelete = async () => {
-    if (!meal || !id) return;
+  const handleDelete = () => {
+    if (!meal) return;
     
     try {
-      setLoading(true);
-      await deleteMeal(id);
-      
-      toast({
-        title: "Meal deleted",
-        description: "The meal has been removed from your calendar.",
-      });
-      
-      navigate('/calendar');
+      const storedMeals = localStorage.getItem('forkful_meals');
+      if (storedMeals) {
+        const meals = JSON.parse(storedMeals) as Meal[];
+        const updatedMeals = meals.filter(m => m.id !== id);
+        
+        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        
+        toast({
+          title: "Meal deleted",
+          description: "The meal has been removed from your calendar.",
+        });
+        
+        navigate('/calendar');
+      }
     } catch (err) {
       console.error(err);
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to delete meal",
+        description: "Failed to delete meal",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
   

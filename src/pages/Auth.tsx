@@ -1,37 +1,50 @@
 
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
-import EmailSignupForm from '@/components/auth/EmailSignupForm';
-import PasswordSignupForm from '@/components/auth/PasswordSignupForm';
-import LoginForm from '@/components/auth/LoginForm';
+
+// Form schema for validation
+const formSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const Auth = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupStep, setSignupStep] = useState<'email' | 'password'>('email');
   
   // If user is already logged in, redirect to home
   if (session) {
-    return <Navigate to="/feed" replace />;
+    return <Navigate to="/" replace />;
   }
 
-  const handleEmailSubmit = (values: { email: string }) => {
-    setSignupEmail(values.email);
-    setSignupStep('password');
-  };
+  // Create form
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const handleSignUp = async (values: { password: string }) => {
+  const handleSignUp = async (values: FormValues) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
-        email: signupEmail,
+        email: values.email,
         password: values.password,
       });
 
@@ -46,7 +59,6 @@ const Auth = () => {
           title: "Success!",
           description: "Check your email for a confirmation link.",
         });
-        navigate("/feed");
       }
     } catch (error) {
       toast({
@@ -58,8 +70,8 @@ const Auth = () => {
       setIsLoading(false);
     }
   };
-  
-  const handleSignIn = async (values: { email: string; password: string }) => {
+
+  const handleSignIn = async (values: FormValues) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -69,20 +81,16 @@ const Auth = () => {
 
       if (error) {
         toast({
-          title: "Error logging in",
+          title: "Error signing in",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Welcome back!",
-          description: "Successfully logged in.",
-        });
         navigate("/feed");
       }
     } catch (error) {
       toast({
-        title: "Error logging in",
+        title: "Error signing in",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
@@ -102,20 +110,90 @@ const Auth = () => {
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="signup">
-            {signupStep === 'email' ? (
-              <EmailSignupForm onSubmit={handleEmailSubmit} />
-            ) : (
-              <PasswordSignupForm 
-                onSubmit={handleSignUp} 
-                onBack={() => setSignupStep('email')}
-                isLoading={isLoading}
-              />
-            )}
+          <TabsContent value="login">
+            <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Welcome back</h2>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary-coral hover:bg-primary-coral/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Logging in..." : "Login"}
+                </Button>
+              </form>
+            </Form>
           </TabsContent>
           
-          <TabsContent value="login">
-            <LoginForm onSubmit={handleSignIn} isLoading={isLoading} />
+          <TabsContent value="signup">
+            <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Create an account</h2>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSignUp)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your@email.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" placeholder="••••••" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary-coral hover:bg-primary-coral/90"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating account..." : "Sign Up"}
+                </Button>
+              </form>
+            </Form>
           </TabsContent>
         </Tabs>
       </div>

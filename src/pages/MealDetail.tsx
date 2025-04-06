@@ -86,13 +86,13 @@ const MealDetail = () => {
         ) : (
           <div className="space-y-6">
             <MealImageSection 
-              image={meal.image_path} 
+              image={meal.image} 
               title={meal.title} 
             />
             
             <MealInfoCard
               day={meal.day}
-              mealType={meal.meal_type}
+              mealType={meal.mealType}
               upvotes={meal.upvotes}
               downvotes={meal.downvotes}
               isLocked={meal.isLocked}

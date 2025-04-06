@@ -1,9 +1,7 @@
 
 import React from 'react';
-import { Calendar, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Calendar, Clock, ThumbsUp, ThumbsDown, Lock, Unlock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Toggle } from '@/components/ui/toggle';
-import Logo from '@/components/Logo';
 
 interface MealInfoCardProps {
   day: string;
@@ -55,18 +53,13 @@ const MealInfoCard = ({
               <span>{downvotes}</span>
             </button>
           </div>
-          <Toggle 
-            pressed={isLocked}
-            onPressedChange={toggleLock}
-            aria-label={isLocked ? "Unlock meal" : "Lock meal"}
-            className="p-2 rounded-full data-[state=on]:bg-primary/10"
+          <button 
+            onClick={toggleLock}
+            className={`flex items-center space-x-1 ${isLocked ? 'text-chow-primary' : 'text-gray-400'}`}
           >
-            <Logo 
-              size="small" 
-              inverted 
-              className={`transition-opacity ${isLocked ? 'opacity-100' : 'opacity-40'}`} 
-            />
-          </Toggle>
+            {isLocked ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
+            <span>{isLocked ? 'Locked' : 'Unlocked'}</span>
+          </button>
         </div>
       </CardContent>
     </Card>

@@ -16,15 +16,11 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-// Define a profile type that matches the database structure
-interface Profile {
+type Profile = {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
+};
 
 const Profile = () => {
   const { user } = useAuth();
@@ -54,9 +50,9 @@ const Profile = () => {
           throw error;
         }
 
-        setProfile(data as Profile);
+        setProfile(data);
         form.reset({
-          displayName: data?.display_name || "",
+          displayName: data.display_name || "",
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -87,14 +83,6 @@ const Profile = () => {
 
       if (error) {
         throw error;
-      }
-
-      // Update the local profile state
-      if (profile) {
-        setProfile({
-          ...profile,
-          display_name: values.displayName
-        });
       }
 
       toast({

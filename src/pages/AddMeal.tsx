@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -10,17 +9,11 @@ import DateSelector from '@/components/meal/DateSelector';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
 import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
 import { format } from 'date-fns';
-import { useSupabaseStorage } from '@/hooks/useSupabaseStorage';
-import { createMeal } from '@/services/mealService';
-import { useAuth } from '@/hooks/useAuth';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AddMeal = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { uploadImage, isUploading } = useSupabaseStorage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryParams = new URLSearchParams(location.search);
@@ -32,23 +25,9 @@ const AddMeal = () => {
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "You must be logged in to add a meal",
-        variant: "destructive"
-      });
-      navigate('/auth');
-      return;
-    }
     
     if (!title.trim()) {
       toast({
@@ -59,97 +38,70 @@ const AddMeal = () => {
       return;
     }
     
-    setIsSubmitting(true);
+    // Get current meals from localStorage or initialize with empty array
+    const existingMeals = localStorage.getItem('forkful_meals');
+    const meals = existingMeals ? JSON.parse(existingMeals) : [];
     
-    try {
-      // Process ingredients - split by commas and newlines
-      const processedIngredients = ingredients
-        .split(/[\n,]+/)
-        .map(item => item.trim())
-        .filter(item => item !== '');
-      
-      // Upload image if present
-      let finalImageUrl = imageUrl;
-      if (imageFile) {
-        try {
-          const uploadedUrl = await uploadImage(imageFile);
-          if (uploadedUrl) {
-            finalImageUrl = uploadedUrl;
-          }
-        } catch (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          toast({
-            title: "Warning",
-            description: "Failed to upload image, but will continue saving the meal.",
-            variant: "default"
-          });
-        }
-      }
-      
-      const mealData = {
-        title: title.trim(),
-        ingredients: processedIngredients,
-        image_path: finalImageUrl || null,
-        meal_type: mealType,
-        day: date ? format(date, 'EEEE') : 'Monday',
-        source_url: null
-      };
-      
-      console.log('Creating meal with data:', mealData);
-      
-      // Create new meal in Supabase
-      await createMeal(mealData);
-      
-      toast({
-        title: "Success!",
-        description: "Meal idea added to calendar",
-      });
-      
-      navigate('/');
-    } catch (error) {
-      console.error('Error adding meal:', error);
-      let errorMessage = "Failed to add meal. Please try again.";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+    // Process ingredients - split by commas and newlines
+    const processedIngredients = ingredients
+      .split(/[\n,]+/)
+      .map(item => item.trim())
+      .filter(item => item !== '');
+    
+    // Create a new meal object
+    const newMeal = {
+      id: `meal-${Date.now()}`, // Generate a unique ID using timestamp
+      title: title.trim(),
+      submittedBy: 'You', // In a real app, this would be the user's name
+      image: imageUrl || '',
+      upvotes: 0,
+      downvotes: 0,
+      day: format(date || new Date(), 'EEEE').substring(0, 3) as any, // Convert to 'Mon', 'Tue', etc.
+      mealType: mealType,
+      ingredients: processedIngredients,
+      dateAdded: new Date().toISOString()
+    };
+    
+    // Add the new meal to the beginning of the array
+    const updatedMeals = [newMeal, ...meals];
+    
+    // Save to localStorage
+    localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+    
+    // Log for debugging
+    console.log({ date, mealType, title, ingredients, imageUrl });
+    
+    // Show success toast and navigate back
+    toast({
+      title: "Success!",
+      description: "Meal idea added to calendar",
+    });
+    navigate('/');
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // In a real app, this would upload the file to a server
+      // For now, we'll just create a local URL
+      const objectUrl = URL.createObjectURL(file);
+      setImageUrl(objectUrl);
     }
   };
-
-  const handleImageSelected = (file: File) => {
-    setImageFile(file);
-    // Create a temporary object URL for preview
-    const objectUrl = URL.createObjectURL(file);
-    setImageUrl(objectUrl);
-  };
-
+  
   return (
     <div className="pb-20">
-      {/* Header with intuitive Apple-like styling */}
-      <div className="bg-primary text-white px-4 py-3 flex items-center sticky top-0 z-10 shadow-sm">
+      {/* Header - with reduced padding */}
+      <div className="bg-primary text-white px-4 py-2 flex items-center">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-xl font-semibold">Add New Idea</h1>
+        <h1 className="text-2xl font-bold">Add New Idea</h1>
       </div>
-      
-      {error && (
-        <Alert className="m-4 border-red-200 bg-red-50">
-          <AlertDescription className="text-red-700">
-            {error}
-          </AlertDescription>
-        </Alert>
-      )}
       
       <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
         {/* Date selection */}
@@ -158,7 +110,7 @@ const AddMeal = () => {
           onDateChange={setDate} 
         />
         
-        {/* Meal type selection */}
+        {/* Meal type selection - FIX HERE: proper onChange handler */}
         <MealTypeSelector 
           value={mealType} 
           onChange={(value) => setMealType(value)} 
@@ -172,21 +124,26 @@ const AddMeal = () => {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Chicken Alfredo"
             required
-            className="rounded-xl"
           />
         </div>
         
         {/* Image preview */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Recipe Image</label>
-          <div className="w-full max-h-48 rounded-xl overflow-hidden">
+        <div onClick={handleImageClick} className="cursor-pointer">
+          <label className="block text-sm font-medium mb-1">Recipe Image (click to change)</label>
+          <div className="w-full max-h-48 rounded-lg overflow-hidden">
             <RecipeImagePreview 
               imageUrl={imageUrl}
               title={title}
               onError={() => setImageUrl("")}
-              onImageSelected={handleImageSelected}
             />
           </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
         </div>
         
         <div>
@@ -195,17 +152,16 @@ const AddMeal = () => {
             value={ingredients}
             onChange={(e) => setIngredients(e.target.value)}
             placeholder="List ingredients, separated by commas or new lines"
-            className="min-h-[100px] rounded-xl"
+            className="min-h-[100px]"
           />
-          <p className="text-xs text-slate-500 mt-1">Press Enter or use commas for multiple ingredients</p>
+          <p className="text-xs text-slate-accent mt-1">Press Enter or use commas for multiple ingredients</p>
         </div>
         
         <Button 
           type="submit" 
-          className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full shadow-md"
-          disabled={isSubmitting || isUploading}
+          className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full"
         >
-          {isSubmitting || isUploading ? "Adding..." : "Add Idea"}
+          Add Idea
         </Button>
       </form>
     </div>

@@ -30,6 +30,7 @@ const MealImageSection = ({ image, title }: MealImageSectionProps) => {
           alt={title}
           className="w-full h-full object-cover"
           onError={() => setHasError(true)}
+          crossOrigin="anonymous"
         />
       ) : (
         <div 

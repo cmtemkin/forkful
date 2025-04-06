@@ -7,8 +7,8 @@ import { useToast } from '@/hooks/use-toast';
 interface MealCardProps {
   id: string;
   title: string;
-  submittedBy?: string;
-  image?: string;
+  submittedBy: string;
+  image: string;
   upvotes: number;
   downvotes: number;
   isLocked?: boolean;
