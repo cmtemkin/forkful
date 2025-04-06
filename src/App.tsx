@@ -12,8 +12,8 @@ import AddMeal from "./pages/AddMeal";
 import EditMeal from "./pages/EditMeal";
 import MealDetail from "./pages/MealDetail";
 import GroceryList from "./pages/GroceryList";
-import Households from "./pages/Households";
-import HouseholdDetail from "./pages/HouseholdDetail";
+import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import RequireAuth from "./components/RequireAuth";
@@ -39,8 +39,8 @@ const App = () => (
                 <Route path="edit-meal/:id" element={<EditMeal />} />
                 <Route path="meal/:id" element={<MealDetail />} />
                 <Route path="grocery-list" element={<GroceryList />} />
-                <Route path="households" element={<Households />} />
-                <Route path="household/:id" element={<HouseholdDetail />} />
+                <Route path="events" element={<Events />} />
+                <Route path="event/:id" element={<EventDetail />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
             </Route>

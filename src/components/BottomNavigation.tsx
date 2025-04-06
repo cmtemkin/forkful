@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Utensils, Calendar, Plus, ShoppingBasket, Home } from 'lucide-react';
+import { Utensils, Calendar, Plus, ShoppingBasket, CalendarClock } from 'lucide-react';
 
 const BottomNavigation = () => {
   return (
@@ -46,13 +46,13 @@ const BottomNavigation = () => {
           <span>Groceries</span>
         </NavLink>
         <NavLink 
-          to="/households" 
+          to="/events" 
           className={({ isActive }) => 
             `bottom-nav-item py-4 ${isActive ? 'text-chow-primary' : 'text-gray-500'}`
           }
         >
-          <Home className="bottom-nav-icon" />
-          <span>Homes</span>
+          <CalendarClock className="bottom-nav-icon" />
+          <span>Events</span>
         </NavLink>
       </div>
     </div>
