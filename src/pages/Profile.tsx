@@ -13,6 +13,9 @@ import { useAuth } from '@/hooks/useAuth';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters" }),
+  firstName: z.string().min(1, { message: "First name is required" }),
+  lastName: z.string().min(1, { message: "Last name is required" }),
+  email: z.string().email({ message: "Please enter a valid email address" }).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -20,6 +23,8 @@ type Profile = {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  first_name: string | null;
+  last_name: string | null;
 };
 
 const Profile = () => {
@@ -27,11 +32,15 @@ const Profile = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [emailUpdateLoading, setEmailUpdateLoading] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       displayName: "",
+      firstName: "",
+      lastName: "",
+      email: user?.email || "",
     },
   });
 
@@ -53,6 +62,9 @@ const Profile = () => {
         setProfile(data);
         form.reset({
           displayName: data.display_name || "",
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          email: user.email || "",
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -78,12 +90,22 @@ const Profile = () => {
         .from('profiles')
         .update({
           display_name: values.displayName,
+          first_name: values.firstName,
+          last_name: values.lastName,
         })
         .eq('id', user.id);
 
       if (error) {
         throw error;
       }
+
+      // Update local profile state
+      setProfile(prev => prev ? {
+        ...prev,
+        display_name: values.displayName,
+        first_name: values.firstName,
+        last_name: values.lastName
+      } : null);
 
       toast({
         title: "Profile updated",
@@ -101,9 +123,38 @@ const Profile = () => {
     }
   };
 
+  const updateEmail = async () => {
+    if (!user || !form.getValues().email) return;
+    
+    setEmailUpdateLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: form.getValues().email,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Verification email sent",
+        description: "Please check your email to confirm the update.",
+      });
+    } catch (error: any) {
+      console.error('Error updating email:', error);
+      toast({
+        title: "Error updating email",
+        description: error.message || "Unable to update your email address.",
+        variant: "destructive",
+      });
+    } finally {
+      setEmailUpdateLoading(false);
+    }
+  };
+
   const getInitials = () => {
-    if (profile?.display_name) {
-      return profile.display_name.slice(0, 2).toUpperCase();
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
     }
     if (user?.email) {
       return user.email.slice(0, 2).toUpperCase();
@@ -127,6 +178,34 @@ const Profile = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="displayName"
             render={({ field }) => (
               <FormItem>
@@ -138,6 +217,36 @@ const Profile = () => {
               </FormItem>
             )}
           />
+
+          <div className="space-y-2">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={updateEmail}
+                      disabled={emailUpdateLoading}
+                      className="whitespace-nowrap"
+                    >
+                      {emailUpdateLoading ? "Updating..." : "Update Email"}
+                    </Button>
+                  </div>
+                  <FormMessage />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email changes require verification
+                  </p>
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="flex justify-end">
             <Button 
