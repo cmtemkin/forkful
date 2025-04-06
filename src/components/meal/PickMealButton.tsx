@@ -1,13 +1,14 @@
-
 import React, { useState } from 'react';
 import { Utensils, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface PickMealButtonProps {
   isPicked: boolean;
   onTogglePick: () => void;
   disabled?: boolean;
+  className?: string;
 }
 
 const successMessages = [
@@ -30,7 +31,12 @@ const getRandomMessage = () => {
   return successMessages[Math.floor(Math.random() * successMessages.length)];
 };
 
-const PickMealButton = ({ isPicked, onTogglePick, disabled = false }: PickMealButtonProps) => {
+const PickMealButton = ({ 
+  isPicked, 
+  onTogglePick, 
+  disabled = false, 
+  className 
+}: PickMealButtonProps) => {
   const [showMessage, setShowMessage] = useState(false);
   const [message, setMessage] = useState('');
   const { toast } = useToast();
@@ -64,11 +70,11 @@ const PickMealButton = ({ isPicked, onTogglePick, disabled = false }: PickMealBu
         onClick={handleToggle}
         disabled={disabled}
         aria-label={isPicked ? "Unpick this meal" : "Pick this meal"}
-        className={`flex items-center justify-center h-12 w-12 rounded-xl transition-all ${
+        className={cn(`flex items-center justify-center h-12 w-12 rounded-xl transition-all ${
           isPicked 
             ? 'bg-primary-coral text-white shadow-md' 
             : 'bg-slate-accent/10 text-slate-accent border border-slate-accent/30'
-        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`, className)}
         whileHover={{ scale: disabled ? 1 : 1.05 }}
         whileTap={{ scale: disabled ? 1 : 0.95 }}
       >
