@@ -30,7 +30,7 @@ const MealDetail = () => {
     setEditIngredients,
     editImage,
     setEditImage,
-    toggleLock,
+    togglePick,
     handleVote,
     handleSaveEdits,
     handleDelete,
@@ -95,9 +95,9 @@ const MealDetail = () => {
               mealType={meal.mealType}
               upvotes={meal.upvotes}
               downvotes={meal.downvotes}
-              isLocked={meal.isLocked}
+              isPicked={meal.isPicked}
               handleVote={handleVote}
-              toggleLock={toggleLock}
+              togglePick={togglePick}
             />
             
             <MealIngredientsList ingredients={meal.ingredients} />

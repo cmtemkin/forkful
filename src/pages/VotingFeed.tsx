@@ -5,8 +5,9 @@ import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
 import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useToast } from '@/hooks/use-toast';
 
-// Sample data - in a real app, this would come from an API
+// Sample data structure with the isPicked field
 const mockMeals = [
   {
     id: '1',
@@ -17,7 +18,8 @@ const mockMeals = [
     downvotes: 2,
     day: 'Monday',
     mealType: 'Dinner',
-    ingredients: ['Chicken', 'Fettuccine', 'Heavy Cream', 'Parmesan Cheese']
+    ingredients: ['Chicken', 'Fettuccine', 'Heavy Cream', 'Parmesan Cheese'],
+    isPicked: false
   },
   {
     id: '2',
@@ -28,7 +30,8 @@ const mockMeals = [
     downvotes: 1,
     day: 'Monday',
     mealType: 'Dinner',
-    ingredients: ['Ground Beef', 'BBQ Sauce', 'Breadcrumbs', 'Onion']
+    ingredients: ['Ground Beef', 'BBQ Sauce', 'Breadcrumbs', 'Onion'],
+    isPicked: false
   },
   {
     id: '3',
@@ -39,7 +42,8 @@ const mockMeals = [
     downvotes: 4,
     day: 'Monday',
     mealType: 'Dinner',
-    ingredients: ['Broccoli', 'Carrots', 'Bell Peppers', 'Soy Sauce', 'Rice']
+    ingredients: ['Broccoli', 'Carrots', 'Bell Peppers', 'Soy Sauce', 'Rice'],
+    isPicked: false
   }
 ];
 
@@ -59,7 +63,8 @@ const getInitialMeals = () => {
       downvotes: typeof meal.downvotes === 'number' ? meal.downvotes : 0,
       day: meal.day || 'Monday',
       mealType: meal.mealType || 'Dinner',
-      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
+      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+      isPicked: !!meal.isPicked
     }));
   } catch (error) {
     console.error('Error parsing meals from localStorage:', error);
@@ -85,6 +90,7 @@ const VotingFeed = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('By Date');
   const [meals, setMeals] = useState(getInitialMeals);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Update localStorage whenever meals change
@@ -100,7 +106,8 @@ const VotingFeed = () => {
         // Ensure all required properties are present
         const migratedMeals = parsedMeals.map(meal => ({
           ...meal,
-          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+          isPicked: !!meal.isLocked // Convert old isLocked to new isPicked
         }));
         localStorage.setItem('forkful_meals', JSON.stringify(migratedMeals));
         setMeals(migratedMeals);
@@ -123,6 +130,56 @@ const VotingFeed = () => {
     }
     
     setMeals(sortedMeals);
+  };
+  
+  const handleTogglePick = (mealId: string) => {
+    const updatedMeals = meals.map(meal => {
+      if (meal.id === mealId) {
+        const newPickedState = !meal.isPicked;
+        
+        if (newPickedState) {
+          // Get random success message
+          const successMessages = [
+            "Let's eat!",
+            "Winner, winner, dinner's picked!",
+            "Locked and loaded 🍴",
+            "Chef's choice 🔥",
+            "The table is set.",
+            "This one's a go!",
+            "Yesss! Let's make it.",
+            "Everyone's on board.",
+            "Can't wait for this one 🤤",
+            "Menu secured!",
+            "This meal's the vibe.",
+            "Serving up greatness.",
+            "Stamped & scheduled!"
+          ];
+          
+          const randomMessage = successMessages[Math.floor(Math.random() * successMessages.length)];
+          
+          toast({
+            title: "Meal picked!",
+            description: randomMessage,
+            duration: 2000,
+          });
+        } else {
+          toast({
+            title: "Meal unpicked",
+            description: "This meal has been removed from your calendar",
+          });
+        }
+        
+        return {
+          ...meal,
+          isPicked: newPickedState,
+          pickedByUserId: newPickedState ? 'current-user' : undefined, // Would use actual user ID in a real app
+          pickedAt: newPickedState ? new Date().toISOString() : undefined
+        };
+      }
+      return meal;
+    });
+    
+    setMeals(updatedMeals);
   };
   
   if (isLoading) {
@@ -173,7 +230,8 @@ const VotingFeed = () => {
                 image={meal.image}
                 upvotes={meal.upvotes}
                 downvotes={meal.downvotes}
-                dayMealtime={`${meal.day} ${meal.mealType}`}
+                isPicked={meal.isPicked}
+                onTogglePick={() => handleTogglePick(meal.id)}
                 dayBadge={
                   <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getDayBadgeColor(meal.day)}`}>
                     {meal.day}

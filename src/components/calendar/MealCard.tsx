@@ -1,36 +1,34 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, ThumbsUp, Utensils } from 'lucide-react';
+import { ThumbsUp, Utensils } from 'lucide-react';
+import PickMealButton from '../meal/PickMealButton';
 
 interface MealCardProps {
   id?: string;
   title: string;
   image?: string;
   upvotes: number;
-  isLocked?: boolean;
+  isPicked?: boolean;
+  onTogglePick?: () => void;
 }
 
-const MealCard = ({ id, title, image, upvotes, isLocked }: MealCardProps) => {
+const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }: MealCardProps) => {
   const [imageError, setImageError] = useState(false);
-  
-  const generatePlaceholderColor = (title: string) => {
-    // Generate a deterministic color based on the title
-    let hash = 0;
-    for (let i = 0; i < title.length; i++) {
-      hash = title.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    // Generate hue (0-360), high saturation and light
-    const h = Math.abs(hash % 360);
-    return `hsl(${h}, 70%, 80%)`;
-  };
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     // Add upvote logic here
     console.log('Upvoted:', id, title);
+  };
+  
+  const handleTogglePick = (e: React.MouseEvent) => {
+    if (e && onTogglePick) {
+      e.preventDefault();
+      e.stopPropagation();
+      onTogglePick();
+    }
   };
   
   // Determine if we should show image or compact card
@@ -66,9 +64,9 @@ const MealCard = ({ id, title, image, upvotes, isLocked }: MealCardProps) => {
                   </div>
                 )}
                 
-                {isLocked && (
-                  <div className="bg-white/20 text-white rounded-full p-1">
-                    <Lock className="h-3 w-3" />
+                {isPicked && (
+                  <div className="bg-primary-coral text-white rounded-full p-1">
+                    <Utensils className="h-3 w-3" />
                   </div>
                 )}
               </div>
@@ -105,10 +103,17 @@ const MealCard = ({ id, title, image, upvotes, isLocked }: MealCardProps) => {
                   </button>
                 )}
                 
-                {isLocked && (
-                  <div className="text-gray-400 rounded-full p-1">
-                    <Lock className="h-3 w-3" />
-                  </div>
+                {onTogglePick && (
+                  <button 
+                    onClick={handleTogglePick}
+                    className="p-1"
+                  >
+                    <PickMealButton 
+                      isPicked={isPicked} 
+                      onTogglePick={() => {}} 
+                      disabled={true}
+                    />
+                  </button>
                 )}
               </div>
             </div>
@@ -131,10 +136,17 @@ const MealCard = ({ id, title, image, upvotes, isLocked }: MealCardProps) => {
                   </button>
                 )}
                 
-                {isLocked && (
-                  <div className="bg-white/20 text-white rounded-full p-1">
-                    <Lock className="h-3 w-3" />
-                  </div>
+                {onTogglePick && (
+                  <button 
+                    onClick={handleTogglePick}
+                    className="p-1"
+                  >
+                    <div className={`flex items-center justify-center h-5 w-5 rounded-full ${
+                      isPicked ? 'bg-primary-coral text-white' : 'bg-white/20 text-white'
+                    }`}>
+                      <Utensils className="h-3 w-3" />
+                    </div>
+                  </button>
                 )}
               </div>
             </div>

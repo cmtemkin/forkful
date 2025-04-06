@@ -11,7 +11,9 @@ interface Meal {
   day: string;
   mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
   ingredients: string[];
-  isLocked?: boolean;
+  isPicked?: boolean;
+  pickedByUserId?: string;
+  pickedAt?: string;
   upvotes: number;
   downvotes: number;
   submittedBy?: string;
@@ -80,7 +82,7 @@ export function useMealDetails(id: string | undefined) {
     return today;
   };
   
-  const toggleLock = () => {
+  const togglePick = () => {
     if (!meal) return;
     
     try {
@@ -88,25 +90,40 @@ export function useMealDetails(id: string | undefined) {
       if (storedMeals) {
         const meals = JSON.parse(storedMeals) as Meal[];
         const updatedMeals = meals.map(m => 
-          m.id === id ? { ...m, isLocked: !m.isLocked } : m
+          m.id === id ? { 
+            ...m, 
+            isPicked: !m.isPicked,
+            pickedByUserId: !m.isPicked ? 'current-user' : undefined, // Would use actual user ID in a real app
+            pickedAt: !m.isPicked ? new Date().toISOString() : undefined 
+          } : m
         );
         
         localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
         
-        setMeal({ ...meal, isLocked: !meal.isLocked });
-        
-        toast({
-          title: meal.isLocked ? "Meal unlocked" : "Meal locked",
-          description: meal.isLocked 
-            ? "This meal can now be changed" 
-            : "This meal is now locked and will appear in your grocery list",
+        setMeal({ 
+          ...meal, 
+          isPicked: !meal.isPicked,
+          pickedByUserId: !meal.isPicked ? 'current-user' : undefined,
+          pickedAt: !meal.isPicked ? new Date().toISOString() : undefined 
         });
+        
+        if (!meal.isPicked) {
+          // Meal is being picked
+          console.log('Meal picked!');
+          // The toast is handled by the PickMealButton component
+        } else {
+          // Meal is being unpicked
+          toast({
+            title: "Meal unpicked",
+            description: "This meal has been removed from your calendar",
+          });
+        }
       }
     } catch (err) {
       console.error(err);
       toast({
         title: "Error",
-        description: "Failed to update meal locked status",
+        description: "Failed to update meal picked status",
         variant: "destructive"
       });
     }
@@ -280,7 +297,7 @@ export function useMealDetails(id: string | undefined) {
     setEditIngredients,
     editImage,
     setEditImage,
-    toggleLock,
+    togglePick,
     handleVote,
     handleSaveEdits,
     handleDelete,

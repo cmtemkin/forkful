@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, ThumbsUp, ThumbsDown, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import PickMealButton from './meal/PickMealButton';
 
 interface MealCardProps {
   id: string;
@@ -11,8 +12,8 @@ interface MealCardProps {
   image: string;
   upvotes: number;
   downvotes: number;
-  isLocked?: boolean;
-  dayMealtime?: string;
+  isPicked?: boolean;
+  onTogglePick?: () => void;
   dayBadge?: React.ReactNode;
   mealTypeBadge?: React.ReactNode;
 }
@@ -24,7 +25,8 @@ const MealCard = ({
   image,
   upvotes,
   downvotes,
-  isLocked = false,
+  isPicked = false,
+  onTogglePick,
   dayBadge,
   mealTypeBadge
 }: MealCardProps) => {
@@ -35,18 +37,6 @@ const MealCard = ({
   const { toast } = useToast();
   
   const hasImage = image && !imageError;
-  
-  const generatePlaceholderColor = (title: string) => {
-    // Generate a deterministic color based on the title
-    let hash = 0;
-    for (let i = 0; i < title.length; i++) {
-      hash = title.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    // Generate hue (0-360), high saturation and light
-    const h = Math.abs(hash % 360);
-    return `hsl(${h}, 70%, 80%)`;
-  };
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -116,6 +106,14 @@ const MealCard = ({
     }
   };
   
+  const handlePickToggle = (e: React.MouseEvent) => {
+    if (e && onTogglePick) {
+      e.preventDefault();
+      e.stopPropagation();
+      onTogglePick();
+    }
+  };
+  
   // Compact card without image
   if (!hasImage) {
     return (
@@ -132,15 +130,20 @@ const MealCard = ({
                 {mealTypeBadge}
               </div>
             </div>
-            {isLocked && (
-              <Lock className="h-5 w-5 text-gray-400" />
+            {onTogglePick && (
+              <div onClick={handlePickToggle}>
+                <PickMealButton 
+                  isPicked={isPicked} 
+                  onTogglePick={() => {}}
+                  disabled={true}
+                />
+              </div>
             )}
           </div>
           <div className="flex gap-3 mt-2">
             <div className="flex items-center">
               <button 
                 className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-forkful-upvote/30' : ''}`}
-                disabled={isLocked}
                 onClick={handleUpvote}
               >
                 <ThumbsUp className="h-4 w-4" />
@@ -150,7 +153,6 @@ const MealCard = ({
             <div className="flex items-center">
               <button 
                 className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-forkful-downvote/30' : ''}`}
-                disabled={isLocked}
                 onClick={handleDownvote}
               >
                 <ThumbsDown className="h-4 w-4" />
@@ -188,15 +190,20 @@ const MealCard = ({
                 {mealTypeBadge}
               </div>
             </div>
-            {isLocked && (
-              <Lock className="h-5 w-5 text-gray-400" />
+            {onTogglePick && (
+              <div onClick={handlePickToggle}>
+                <PickMealButton 
+                  isPicked={isPicked} 
+                  onTogglePick={() => {}}
+                  disabled={true}
+                />
+              </div>
             )}
           </div>
           <div className="flex gap-3 mt-2">
             <div className="flex items-center">
               <button 
                 className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-forkful-upvote/30' : ''}`}
-                disabled={isLocked}
                 onClick={handleUpvote}
               >
                 <ThumbsUp className="h-4 w-4" />
@@ -206,7 +213,6 @@ const MealCard = ({
             <div className="flex items-center">
               <button 
                 className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-forkful-downvote/30' : ''}`}
-                disabled={isLocked}
                 onClick={handleDownvote}
               >
                 <ThumbsDown className="h-4 w-4" />

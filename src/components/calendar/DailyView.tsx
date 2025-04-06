@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { format, addDays, subDays } from 'date-fns';
-import { ChevronRight, ChevronLeft, Plus } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Plus, Utensils } from 'lucide-react';
 import { useCalendar } from '@/contexts/CalendarContext';
 import { Link } from 'react-router-dom';
 
@@ -66,8 +66,10 @@ const DailyView = () => {
                           <h3 className="font-medium">{meal.title}</h3>
                           <div className="flex items-center space-x-2">
                             <span className="text-chow-upvote text-sm">{meal.upvotes || 0} 👍</span>
-                            {meal.isLocked && (
-                              <span className="text-gray-500 text-xs">• Locked</span>
+                            {meal.isPicked && (
+                              <span className="text-primary-coral text-xs flex items-center">
+                                • <Utensils className="h-3 w-3 ml-1" /> Picked
+                              </span>
                             )}
                           </div>
                         </div>

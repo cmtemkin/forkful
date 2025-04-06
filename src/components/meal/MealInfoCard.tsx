@@ -1,16 +1,17 @@
 
 import React from 'react';
-import { Calendar, Clock, ThumbsUp, ThumbsDown, Lock, Unlock } from 'lucide-react';
+import { Calendar, Clock, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import PickMealButton from './PickMealButton';
 
 interface MealInfoCardProps {
   day: string;
   mealType: string;
   upvotes: number;
   downvotes: number;
-  isLocked: boolean | undefined;
+  isPicked: boolean | undefined;
   handleVote: (isUpvote: boolean) => void;
-  toggleLock: () => void;
+  togglePick: () => void;
 }
 
 const MealInfoCard = ({ 
@@ -18,9 +19,9 @@ const MealInfoCard = ({
   mealType, 
   upvotes, 
   downvotes, 
-  isLocked, 
+  isPicked, 
   handleVote, 
-  toggleLock 
+  togglePick 
 }: MealInfoCardProps) => {
   return (
     <Card>
@@ -53,13 +54,11 @@ const MealInfoCard = ({
               <span>{downvotes}</span>
             </button>
           </div>
-          <button 
-            onClick={toggleLock}
-            className={`flex items-center space-x-1 ${isLocked ? 'text-chow-primary' : 'text-gray-400'}`}
-          >
-            {isLocked ? <Lock className="h-5 w-5" /> : <Unlock className="h-5 w-5" />}
-            <span>{isLocked ? 'Locked' : 'Unlocked'}</span>
-          </button>
+          
+          <PickMealButton 
+            isPicked={!!isPicked} 
+            onTogglePick={togglePick} 
+          />
         </div>
       </CardContent>
     </Card>

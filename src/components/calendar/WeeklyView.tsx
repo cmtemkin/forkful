@@ -52,7 +52,7 @@ const WeeklyView = () => {
                 {dayNumber}
               </span>
               {hasMeals && !isSelected && (
-                <div className="h-1 w-1 bg-chow-primary rounded-full mt-1"></div>
+                <div className="h-1 w-1 bg-primary-coral rounded-full mt-1"></div>
               )}
             </button>
           );
@@ -71,9 +71,9 @@ const WeeklyView = () => {
             <div key={mealType} className="space-y-2">
               <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold">{mealType}</h2>
-                {topMeal?.isLocked && (
-                  <div className="bg-gray-100 text-gray-500 text-xs py-1 px-2 rounded-full">
-                    Locked
+                {topMeal?.isPicked && (
+                  <div className="bg-primary-coral/20 text-primary-coral text-xs py-1 px-2 rounded-full">
+                    Picked
                   </div>
                 )}
               </div>
@@ -84,7 +84,7 @@ const WeeklyView = () => {
                   title={topMeal.title}
                   image={topMeal.image}
                   upvotes={topMeal.upvotes || 0}
-                  isLocked={topMeal.isLocked}
+                  isPicked={topMeal.isPicked}
                 />
               ) : (
                 <Link

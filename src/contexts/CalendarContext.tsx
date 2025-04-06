@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { format, startOfWeek, addDays, addWeeks, isSameDay, isToday } from 'date-fns';
 
 export type MealType = 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
@@ -12,7 +12,9 @@ export interface Meal {
   image?: string;
   day: DayString;
   mealType: MealType;
-  isLocked?: boolean;
+  isPicked?: boolean;
+  pickedByUserId?: string;
+  pickedAt?: string;
   upvotes?: number;
   downvotes?: number;
 }
@@ -35,74 +37,31 @@ interface CalendarContextType {
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
 
-// Sample data - in a real app, this would come from an API
-const mockMeals: Meal[] = [
-  {
-    id: '1',
-    title: 'Chicken Alfredo',
-    image: 'https://source.unsplash.com/photo-1645112411341-6c4fd023882a',
-    day: 'Mon',
-    mealType: 'Dinner',
-    isLocked: true,
-    upvotes: 5,
-    downvotes: 2
-  },
-  {
-    id: '2',
-    title: 'Chicken Salad',
-    image: 'https://source.unsplash.com/photo-1546069901-ba9599a7e63c',
-    day: 'Tue',
-    mealType: 'Breakfast',
-    upvotes: 5,
-    downvotes: 0
-  },
-  {
-    id: '3',
-    title: 'Pancakes',
-    image: 'https://source.unsplash.com/photo-1567620905732-2d1ec7ab7445',
-    day: 'Wed',
-    mealType: 'Breakfast',
-    upvotes: 1,
-    downvotes: 0
-  },
-  {
-    id: '4',
-    title: 'Tacos',
-    image: 'https://source.unsplash.com/photo-1565299624946-b28f40a0ae38',
-    day: 'Wed',
-    mealType: 'Lunch',
-    upvotes: 3,
-    downvotes: 1
-  },
-  {
-    id: '5',
-    title: 'Spaghetti',
-    image: 'https://source.unsplash.com/photo-1551183053-bf91a1d81141',
-    day: 'Thu',
-    mealType: 'Dinner',
-    upvotes: 8,
-    downvotes: 1
-  },
-  {
-    id: '6',
-    title: 'Apple',
-    image: 'https://source.unsplash.com/photo-1568702846914-96b305d2aaeb',
-    day: 'Fri',
-    mealType: 'Snacks',
-    upvotes: 4,
-    downvotes: 0
-  }
-];
-
 export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<CalendarViewType>('weekly');
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
-    startOfWeek(new Date(), { weekStartsOn: 0 }) // Changed from 1 (Monday) to 0 (Sunday)
+    startOfWeek(new Date(), { weekStartsOn: 0 })
   );
   
+  // Get meals from localStorage instead of using the mock data
+  const [meals, setMeals] = useState<Meal[]>([]);
+  
+  // Load meals from localStorage
+  useEffect(() => {
+    const storedMeals = localStorage.getItem('forkful_meals');
+    if (storedMeals) {
+      try {
+        const parsedMeals = JSON.parse(storedMeals) as Meal[];
+        setMeals(parsedMeals);
+      } catch (err) {
+        console.error('Error parsing meals from localStorage', err);
+      }
+    }
+  }, []);
+  
   const mealTypes: MealType[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
-  const days: DayString[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; // Reordered to start with Sunday
+  const days: DayString[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   const nextWeek = () => {
     setCurrentWeekStart(prev => addWeeks(prev, 1));
@@ -120,19 +79,21 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const dayToString = (date: Date): DayString => {
-    const dayIndex = date.getDay(); // Sunday is already 0, so we don't need to adjust
+    const dayIndex = date.getDay(); // Sunday is already 0
     return days[dayIndex];
   };
   
   const getMealsForDay = (date: Date): Meal[] => {
     const dayStr = dayToString(date);
-    return mockMeals.filter(meal => meal.day === dayStr);
+    // Only return meals that are picked
+    return meals.filter(meal => meal.day === dayStr && meal.isPicked);
   };
   
   const getMealsByType = (date: Date, mealType: MealType): Meal[] => {
     const dayStr = dayToString(date);
-    return mockMeals.filter(
-      meal => meal.day === dayStr && meal.mealType === mealType
+    // Only return meals that are picked
+    return meals.filter(
+      meal => meal.day === dayStr && meal.mealType === mealType && meal.isPicked
     );
   };
   
@@ -143,7 +104,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
         currentView,
         currentWeekStart,
         mealTypes,
-        meals: mockMeals,
+        meals,
         setCurrentDate,
         setCurrentView,
         nextWeek,
