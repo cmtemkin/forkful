@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { format, getDaysInMonth, startOfMonth, isSameDay, isToday, addDays, addMonths, subMonths } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, isSameDay, isToday, addMonths, subMonths } from 'date-fns';
 import { useCalendar } from '@/contexts/CalendarContext';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -10,11 +11,10 @@ const MonthlyView = () => {
   const monthStart = startOfMonth(currentDate);
   const daysInMonth = getDaysInMonth(currentDate);
   const startDay = monthStart.getDay(); // 0 for Sunday, 1 for Monday, etc.
-  const adjustedStartDay = (startDay === 0) ? 6 : startDay - 1; // Adjust for Monday start
   
   // Generate array of days for the calendar
   const days = [];
-  for (let i = 0; i < adjustedStartDay; i++) {
+  for (let i = 0; i < startDay; i++) {
     days.push(null); // Empty cells for days before the 1st of the month
   }
   for (let i = 1; i <= daysInMonth; i++) {
@@ -61,9 +61,9 @@ const MonthlyView = () => {
       </div>
       
       <div className="p-4">
-        {/* Day headers */}
+        {/* Day headers - Changed to start with Sunday */}
         <div className="grid grid-cols-7 text-center mb-2">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
             <div key={day} className="text-sm font-medium text-gray-500 py-2">
               {day}
             </div>
