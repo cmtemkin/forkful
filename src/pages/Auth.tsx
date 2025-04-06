@@ -19,7 +19,7 @@ const Auth = () => {
   
   // If user is already logged in, redirect to home
   if (session) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/feed" replace />;
   }
 
   const handleEmailSubmit = (values: { email: string }) => {
@@ -96,7 +96,7 @@ const Auth = () => {
       <h1 className="text-3xl font-outfit font-bold text-primary-coral mb-8">forkful</h1>
       
       <div className="w-full max-w-md bg-white rounded-lg shadow-sm p-8">
-        <Tabs defaultValue="signup" className="w-full">
+        <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
