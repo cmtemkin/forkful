@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ThumbsUp, ThumbsDown, Utensils } from 'lucide-react';
@@ -40,7 +39,6 @@ const MealCard = ({
     e.preventDefault();
     e.stopPropagation();
     
-    // If already upvoted, remove upvote
     if (userVote === 'up') {
       setLocalUpvotes(prev => prev - 1);
       setUserVote(null);
@@ -49,7 +47,6 @@ const MealCard = ({
         description: `You removed your upvote from ${title}`,
       });
     } 
-    // If previously downvoted, switch to upvote
     else if (userVote === 'down') {
       setLocalUpvotes(prev => prev + 1);
       setLocalDownvotes(prev => prev - 1);
@@ -59,7 +56,6 @@ const MealCard = ({
         description: `You changed your vote to upvote for ${title}`,
       });
     } 
-    // If no previous vote, add upvote
     else {
       setLocalUpvotes(prev => prev + 1);
       setUserVote('up');
@@ -74,7 +70,6 @@ const MealCard = ({
     e.preventDefault();
     e.stopPropagation();
     
-    // If already downvoted, remove downvote
     if (userVote === 'down') {
       setLocalDownvotes(prev => prev - 1);
       setUserVote(null);
@@ -83,7 +78,6 @@ const MealCard = ({
         description: `You removed your downvote from ${title}`,
       });
     } 
-    // If previously upvoted, switch to downvote
     else if (userVote === 'up') {
       setLocalDownvotes(prev => prev + 1);
       setLocalUpvotes(prev => prev - 1);
@@ -93,7 +87,6 @@ const MealCard = ({
         description: `You changed your vote to downvote for ${title}`,
       });
     } 
-    // If no previous vote, add downvote
     else {
       setLocalDownvotes(prev => prev + 1);
       setUserVote('down');
@@ -115,29 +108,26 @@ const MealCard = ({
   return (
     <Link to={`/meal/${id}`} className="block">
       <motion.div 
-        className="meal-card bg-white rounded-xl shadow-sm border border-slate-accent/10 p-4 mb-4"
+        className="meal-card bg-white rounded-xl shadow-sm border border-slate-accent/10 p-4 mb-4 relative"
         whileTap={{ scale: 0.98 }}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="relative">
-          {/* Title and Contributor Area */}
+        <div className="relative pr-12">
           <div className="mb-2">
             <h3 className="text-xl font-bold text-charcoal-gray leading-tight line-clamp-1">{title}</h3>
             <p className="text-sm text-slate-accent mt-0.5">{submittedBy}</p>
           </div>
           
-          {/* Badges Row */}
           <div className="flex flex-wrap gap-2 mb-3">
             {dayBadge}
             {mealTypeBadge}
           </div>
           
-          {/* Position the Pick button absolutely in the top right corner */}
           {onTogglePick && (
             <div 
-              className="absolute top-0 right-0" 
+              className="absolute top-0 right-0 w-12 flex justify-center" 
               onClick={handlePickToggle}
             >
               <PickMealButton 
@@ -147,9 +137,7 @@ const MealCard = ({
             </div>
           )}
           
-          {/* Interactions Area */}
           <div className="flex items-center gap-3">
-            {/* Voting Controls */}
             <button 
               className={`flex items-center gap-1 px-2 py-1 rounded-full ${
                 userVote === 'up' ? 'bg-pistachio-green/20' : ''
