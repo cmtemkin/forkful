@@ -62,6 +62,18 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
+        // Also create or update the profile manually to ensure consistency
+        const { data: userData } = await supabase.auth.getUser();
+        
+        if (userData?.user) {
+          await supabase.from('profiles').upsert({
+            id: userData.user.id,
+            first_name: values.firstName,
+            last_name: values.lastName,
+            display_name: `${values.firstName} ${values.lastName}`
+          });
+        }
+        
         toast({
           title: "Success!",
           description: "Check your email for a confirmation link.",
@@ -132,7 +144,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your first name" {...field} />
+                        <Input placeholder="Enter your first name" {...field} className="rounded-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -146,7 +158,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your last name" {...field} />
+                        <Input placeholder="Enter your last name" {...field} className="rounded-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -160,7 +172,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your@email.com" {...field} />
+                        <Input placeholder="your@email.com" {...field} className="rounded-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -174,7 +186,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••" {...field} />
+                        <Input type="password" placeholder="••••••" {...field} className="rounded-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -183,7 +195,7 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary-coral hover:bg-primary-coral/90"
+                  className="w-full bg-primary-coral hover:bg-primary-coral/90 rounded-full"
                   disabled={isLoading}
                 >
                   {isLoading ? "Creating account..." : "Sign Up"}
@@ -203,7 +215,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="your@email.com" {...field} />
+                        <Input placeholder="your@email.com" {...field} className="rounded-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -217,7 +229,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="••••••" {...field} />
+                        <Input type="password" placeholder="••••••" {...field} className="rounded-full" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -226,7 +238,7 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary-coral hover:bg-primary-coral/90"
+                  className="w-full bg-primary-coral hover:bg-primary-coral/90 rounded-full"
                   disabled={isLoading}
                 >
                   {isLoading ? "Logging in..." : "Login"}

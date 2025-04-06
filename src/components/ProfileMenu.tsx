@@ -13,11 +13,16 @@ import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const ProfileMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, profileData } = useAuth();
   const navigate = useNavigate();
 
   const getInitials = () => {
-    // Check if profile has first and last name
+    // First check if we have profile data from context
+    if (profileData?.firstName && profileData?.lastName) {
+      return `${profileData.firstName[0]}${profileData.lastName[0]}`.toUpperCase();
+    }
+    
+    // Fallback to user metadata if available
     const firstName = user?.user_metadata?.first_name || '';
     const lastName = user?.user_metadata?.last_name || '';
 

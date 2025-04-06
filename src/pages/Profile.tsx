@@ -28,7 +28,7 @@ type Profile = {
 };
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, setUserProfileData } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -106,6 +106,13 @@ const Profile = () => {
         first_name: values.firstName,
         last_name: values.lastName
       } : null);
+      
+      // Update the auth context so profile menu and other components can access updated data
+      setUserProfileData({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        displayName: values.displayName
+      });
 
       toast({
         title: "Profile updated",
@@ -163,8 +170,8 @@ const Profile = () => {
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-charcoal-gray">Your Profile</h1>
+    <div className="p-6 max-w-md mx-auto bg-white rounded-lg shadow-sm">
+      <h1 className="text-2xl font-bold mb-6 text-center text-charcoal-gray">Your Profile</h1>
       
       <div className="flex flex-col items-center mb-8">
         <Avatar className="h-24 w-24 mb-4 bg-primary-coral/10">
@@ -183,7 +190,7 @@ const Profile = () => {
               <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} className="rounded-full" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -197,7 +204,7 @@ const Profile = () => {
               <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} className="rounded-full" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -211,7 +218,7 @@ const Profile = () => {
               <FormItem>
                 <FormLabel>Display Name</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} className="rounded-full" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -227,14 +234,14 @@ const Profile = () => {
                   <FormLabel>Email Address</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} className="rounded-full" />
                     </FormControl>
                     <Button 
                       type="button" 
                       variant="outline"
                       onClick={updateEmail}
                       disabled={emailUpdateLoading}
-                      className="whitespace-nowrap"
+                      className="whitespace-nowrap rounded-full"
                     >
                       {emailUpdateLoading ? "Updating..." : "Update Email"}
                     </Button>
@@ -248,10 +255,10 @@ const Profile = () => {
             />
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex justify-center">
             <Button 
               type="submit" 
-              className="bg-primary-coral hover:bg-primary-coral/90"
+              className="bg-primary-coral hover:bg-primary-coral/90 rounded-full px-10"
               disabled={isLoading}
             >
               {isLoading ? "Saving..." : "Save Changes"}
