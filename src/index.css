@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 24 94% 53%;
+    --primary: 12 94% 67%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 160 82% 40%;
@@ -23,7 +23,7 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 24 100% 96%;
+    --accent: 12 100% 96%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -41,7 +41,7 @@
   }
 
   body {
-    @apply bg-chow-background text-chow-text;
+    @apply bg-forkful-background text-forkful-text;
     font-family: 'Inter', sans-serif;
   }
 }
@@ -56,7 +56,7 @@
   }
   
   .tab-active {
-    @apply border-b-2 border-chow-primary text-chow-primary;
+    @apply border-b-2 border-forkful-primary text-forkful-primary;
   }
   
   .vote-button {
@@ -64,11 +64,11 @@
   }
   
   .upvote {
-    @apply bg-chow-upvote/10 text-chow-upvote;
+    @apply bg-forkful-upvote/10 text-forkful-upvote;
   }
   
   .downvote {
-    @apply bg-chow-downvote/10 text-chow-downvote;
+    @apply bg-forkful-downvote/10 text-forkful-downvote;
   }
   
   .meal-card {

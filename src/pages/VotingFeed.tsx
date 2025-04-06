@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -43,7 +43,7 @@ const mockMeals = [
 
 // Get the stored meals from localStorage or use the mock data
 const getInitialMeals = () => {
-  const storedMeals = localStorage.getItem('chowdown_meals');
+  const storedMeals = localStorage.getItem('forkful_meals');
   return storedMeals ? JSON.parse(storedMeals) : mockMeals;
 };
 
@@ -57,8 +57,17 @@ const VotingFeed = () => {
   
   useEffect(() => {
     // Update localStorage whenever meals change
-    localStorage.setItem('chowdown_meals', JSON.stringify(meals));
+    localStorage.setItem('forkful_meals', JSON.stringify(meals));
   }, [meals]);
+
+  useEffect(() => {
+    // Migrate old data if it exists
+    const oldStoredMeals = localStorage.getItem('chowdown_meals');
+    if (oldStoredMeals && !localStorage.getItem('forkful_meals')) {
+      localStorage.setItem('forkful_meals', oldStoredMeals);
+      setMeals(JSON.parse(oldStoredMeals));
+    }
+  }, []);
 
   const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter);
@@ -96,12 +105,12 @@ const VotingFeed = () => {
   return (
     <div className="pb-20">
       {/* Header with logo */}
-      <div className="bg-white text-chow-primary px-4 py-4 flex justify-center border-b">
+      <div className="bg-[#FF7A5A] text-white px-4 py-4 flex justify-center">
         <div className="w-32">
           <img 
-            src="/lovable-uploads/92e6b1a0-a2b6-46ee-a824-f1a8c25153b6.png" 
-            alt="ChowDown" 
-            className="w-full invert" 
+            src="/lovable-uploads/ee2fee59-cbb5-4a35-ae3f-7e3c36de6388.png" 
+            alt="Forkful" 
+            className="w-full" 
           />
         </div>
       </div>
@@ -153,13 +162,14 @@ const VotingFeed = () => {
         )}
       </div>
       
-      {/* Add new idea button - centered at bottom */}
+      {/* Add new idea button - centered at bottom, now using + icon */}
       <div className="fixed bottom-24 left-0 right-0 flex justify-center z-10">
         <Link 
           to="/add-meal"
-          className="bg-chow-primary text-white py-3 px-6 rounded-full font-medium flex items-center justify-center shadow-md"
+          className="bg-[#FF7A5A] text-white h-12 w-12 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
+          aria-label="Add new idea"
         >
-          New Idea
+          <Plus size={24} />
         </Link>
       </div>
     </div>

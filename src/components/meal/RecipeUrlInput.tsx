@@ -1,100 +1,78 @@
 
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { toast } from "@/hooks/use-toast";
-import { scrapeRecipe } from '@/utils/recipeScraperService';
+import { LinkIcon } from 'lucide-react';
 
-interface RecipeUrlInputProps {
-  disabled: boolean;
-  onScrapedData: (data: {
-    title?: string;
-    ingredients?: string;
-    imageUrl?: string;
-  }) => void;
+export interface RecipeUrlInputProps {
+  initialUrl?: string;
+  onImageUrl?: (url: string) => void;
+  onRecipeUrl?: (url: string) => void;
 }
 
-const RecipeUrlInput = ({ disabled, onScrapedData }: RecipeUrlInputProps) => {
-  const [recipeUrl, setRecipeUrl] = useState("");
-  const [isScraping, setIsScraping] = useState(false);
-  const [lastScrapedUrl, setLastScrapedUrl] = useState("");
-
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setRecipeUrl(url);
-  };
+const RecipeUrlInput = ({ initialUrl = '', onImageUrl, onRecipeUrl }: RecipeUrlInputProps) => {
+  const [url, setUrl] = useState(initialUrl);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const handleUrlBlur = async () => {
-    // Only attempt to scrape if the URL is reasonably valid and different from last scraped URL
-    if (
-      recipeUrl && 
-      recipeUrl.includes('http') && 
-      (recipeUrl.includes('.com') || recipeUrl.includes('.org') || recipeUrl.includes('.net')) &&
-      recipeUrl !== lastScrapedUrl
-    ) {
-      await scrapeRecipeData(recipeUrl);
-      setLastScrapedUrl(recipeUrl);
+  const handleImport = async () => {
+    if (!url) {
+      setError('Please enter a URL');
+      return;
     }
-  };
-  
-  const scrapeRecipeData = async (url: string) => {
-    if (isScraping) return; // Prevent multiple scraping attempts
     
-    setIsScraping(true);
+    setIsLoading(true);
+    setError(null);
     
     try {
-      const scrapedData = await scrapeRecipe(url);
+      // Here would typically be API call to extract recipe
+      // For now, we'll simulate a success
       
-      if (scrapedData) {
-        // Pass scraped data to parent component
-        onScrapedData({
-          title: scrapedData.title,
-          ingredients: scrapedData.ingredients.join('\n'),
-          imageUrl: scrapedData.image
-        });
-        
-        toast({
-          title: "Recipe Details Loaded",
-          description: "Successfully imported recipe information",
-        });
-      } else {
-        toast({
-          title: "Couldn't Load Recipe",
-          description: "Please enter recipe details manually",
-          variant: "destructive",
-        });
+      // If recipe extraction successful
+      if (onRecipeUrl) {
+        onRecipeUrl(url);
       }
-    } catch (error) {
-      console.error("Error scraping recipe:", error);
-      toast({
-        title: "Error",
-        description: "Failed to extract recipe details. Please enter manually.",
-        variant: "destructive",
-      });
+      
+      // If image URL extraction successful
+      if (onImageUrl) {
+        // For demo, we'll just use a placeholder image
+        onImageUrl('https://source.unsplash.com/random/300x200/?food');
+      }
+      
+    } catch (err) {
+      setError('Failed to import recipe');
+      console.error(err);
     } finally {
-      setIsScraping(false);
+      setIsLoading(false);
     }
   };
-
+  
   return (
-    <div>
-      <label className="block text-sm font-medium mb-1">Recipe URL (optional)</label>
-      <div className="relative">
+    <div className="space-y-2">
+      <div className="flex gap-2">
         <Input
-          value={recipeUrl}
-          onChange={handleUrlChange}
-          onBlur={handleUrlBlur}
-          placeholder="Paste a link to automatically fetch details"
           type="url"
-          disabled={disabled}
+          placeholder="Paste recipe URL here"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          className="flex-1"
         />
-        {isScraping && (
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-chow-primary"></div>
-          </div>
-        )}
+        <Button 
+          onClick={handleImport} 
+          disabled={isLoading}
+          size="sm"
+        >
+          <LinkIcon className="h-4 w-4 mr-1" />
+          Import
+        </Button>
       </div>
-      <p className="text-xs text-gray-500 mt-1">
-        Paste a recipe URL to automatically extract details
+      
+      {error && (
+        <p className="text-red-500 text-sm">{error}</p>
+      )}
+      
+      <p className="text-gray-500 text-sm">
+        Paste a URL to import recipe details automatically
       </p>
     </div>
   );

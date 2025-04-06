@@ -63,9 +63,9 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// ChowDown custom colors
-				chow: {
-					primary: '#F97316', // Orange - buttons, CTAs
+				// Forkful custom colors
+				forkful: {
+					primary: '#FF7A5A', // Orange - buttons, CTAs
 					secondary: '#10B981', // Green - upvotes, highlights
 					background: '#FFF8F4', // Cream - general background
 					text: '#1F2937', // Slate gray - high readability
