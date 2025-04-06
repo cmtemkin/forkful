@@ -29,6 +29,7 @@ const Auth = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("login");
   
   if (session) {
     return <Navigate to="/" replace />;
@@ -45,7 +46,8 @@ const Auth = () => {
   });
 
   // Clear error when changing tabs
-  const handleTabChange = () => {
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
     setAuthError(null);
     form.clearErrors();
   };
@@ -98,9 +100,9 @@ const Auth = () => {
           description: "Your account has been created. You can now sign in.",
         });
         
-        // Automatically switch to login tab
+        // Automatically switch to login tab without using direct DOM manipulation
         form.reset();
-        document.querySelector('[data-state="inactive"][data-value="login"]')?.click();
+        setActiveTab("login");
       }
     } catch (err: any) {
       console.error("Unexpected signup error:", err);
@@ -164,7 +166,7 @@ const Auth = () => {
       <h1 className="text-3xl font-outfit font-bold text-primary-coral mb-8">forkful</h1>
       
       <div className="w-full max-w-md bg-white rounded-lg shadow-sm p-8">
-        <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
+        <Tabs defaultValue="login" value={activeTab} className="w-full" onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
