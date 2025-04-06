@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, UserPlus, Home, CalendarDays, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,47 +9,52 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from '@/hooks/use-toast';
-
-// Mock data for household details - in a real app, this would come from a database
-const householdsData = {
-  '1': {
-    id: '1',
-    name: 'My House',
-    members: [
-      { id: '1', name: 'John Doe', email: 'john@example.com' },
-      { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-      { id: '3', name: 'Mike Johnson', email: 'mike@example.com' },
-    ]
-  },
-  '2': {
-    id: '2',
-    name: 'Beach House',
-    members: [
-      { id: '1', name: 'John Doe', email: 'john@example.com' },
-      { id: '4', name: 'Sarah Wilson', email: 'sarah@example.com' },
-    ]
-  }
-};
+import { useToast } from '@/hooks/use-toast';
+import { getHouseholdById, addHouseholdMember, Household, HouseholdMember } from '@/services/householdService';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const HouseholdDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [household, setHousehold] = useState<Household | null>(null);
+  const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Fetch household data - in a real app, this would be an API call
-  const household = householdsData[id as keyof typeof householdsData];
+  useEffect(() => {
+    const loadHousehold = async () => {
+      if (!id) {
+        navigate('/households');
+        return;
+      }
+      
+      try {
+        const householdData = await getHouseholdById(id);
+        setHousehold(householdData);
+        setMembers(householdData.members || []);
+      } catch (error) {
+        console.error('Failed to load household details:', error);
+        toast({
+          title: "Error loading household",
+          description: "Could not load household details. Please try again later.",
+          variant: "destructive"
+        });
+        navigate('/households');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadHousehold();
+  }, [id, navigate, toast]);
   
-  // Redirect to households if not found
-  if (!household) {
-    navigate('/households');
-    return null;
-  }
-  
-  const handleAddMember = (e: React.FormEvent) => {
+  const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMemberEmail.trim()) {
+    
+    if (!id || !newMemberEmail.trim()) {
       toast({
         title: "Error",
         description: "Please enter an email address",
@@ -58,15 +63,51 @@ const HouseholdDetail = () => {
       return;
     }
     
-    // In a real app, this would send an invitation to the email
-    toast({
-      title: "Invitation sent",
-      description: `An invitation has been sent to ${newMemberEmail}`,
-    });
+    setIsSubmitting(true);
     
-    setNewMemberEmail('');
-    setIsDialogOpen(false);
+    try {
+      await addHouseholdMember(id, newMemberEmail);
+      
+      // Refresh household members
+      const updatedHousehold = await getHouseholdById(id);
+      setMembers(updatedHousehold.members || []);
+      
+      toast({
+        title: "Invitation sent",
+        description: `An invitation has been sent to ${newMemberEmail}`,
+      });
+      
+      setNewMemberEmail('');
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to add member:', error);
+      
+      const errorMsg = error instanceof Error ? error.message : "Please try again later";
+      
+      toast({
+        title: "Error inviting member",
+        description: errorMsg,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+  
+  if (!household) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">Household not found</h1>
+        <Button onClick={() => navigate('/households')}>
+          Back to Households
+        </Button>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -102,7 +143,9 @@ const HouseholdDetail = () => {
                     placeholder="Enter email address"
                   />
                 </div>
-                <Button type="submit" className="w-full">Send Invitation</Button>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Send Invitation"}
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -122,21 +165,38 @@ const HouseholdDetail = () => {
               <CardTitle>Household Members</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-4">
-                {household.members.map(member => (
-                  <li key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-gray-500">{member.email}</div>
+              {members.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500">No members yet</p>
+                </div>
+              ) : (
+                <ul className="space-y-4">
+                  {members.map(member => (
+                    <li key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            {member.profile?.display_name
+                              ? member.profile.display_name.split(' ').map(n => n[0]).join('')
+                              : 'U'}
+                          </AvatarFallback>
+                          {member.profile?.avatar_url && (
+                            <AvatarImage src={member.profile.avatar_url} />
+                          )}
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">
+                            {member.profile?.display_name || 'User'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {member.role}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

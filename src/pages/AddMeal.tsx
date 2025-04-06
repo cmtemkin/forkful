@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -9,11 +10,16 @@ import DateSelector from '@/components/meal/DateSelector';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
 import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
 import { format } from 'date-fns';
+import { useSupabaseStorage } from '@/hooks/useSupabaseStorage';
+import { createMeal } from '@/services/mealService';
+import { useAuth } from '@/hooks/useAuth';
 
 const AddMeal = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { uploadImage, isUploading } = useSupabaseStorage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryParams = new URLSearchParams(location.search);
@@ -25,9 +31,21 @@ const AddMeal = () => {
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to add a meal",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
     
     if (!title.trim()) {
       toast({
@@ -38,61 +56,58 @@ const AddMeal = () => {
       return;
     }
     
-    // Get current meals from localStorage or initialize with empty array
-    const existingMeals = localStorage.getItem('forkful_meals');
-    const meals = existingMeals ? JSON.parse(existingMeals) : [];
+    setIsSubmitting(true);
     
-    // Process ingredients - split by commas and newlines
-    const processedIngredients = ingredients
-      .split(/[\n,]+/)
-      .map(item => item.trim())
-      .filter(item => item !== '');
-    
-    // Create a new meal object
-    const newMeal = {
-      id: `meal-${Date.now()}`, // Generate a unique ID using timestamp
-      title: title.trim(),
-      submittedBy: 'You', // In a real app, this would be the user's name
-      image: imageUrl || '',
-      upvotes: 0,
-      downvotes: 0,
-      day: format(date || new Date(), 'EEEE').substring(0, 3) as any, // Convert to 'Mon', 'Tue', etc.
-      mealType: mealType,
-      ingredients: processedIngredients,
-      dateAdded: new Date().toISOString()
-    };
-    
-    // Add the new meal to the beginning of the array
-    const updatedMeals = [newMeal, ...meals];
-    
-    // Save to localStorage
-    localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
-    
-    // Log for debugging
-    console.log({ date, mealType, title, ingredients, imageUrl });
-    
-    // Show success toast and navigate back
-    toast({
-      title: "Success!",
-      description: "Meal idea added to calendar",
-    });
-    navigate('/');
-  };
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, this would upload the file to a server
-      // For now, we'll just create a local URL
-      const objectUrl = URL.createObjectURL(file);
-      setImageUrl(objectUrl);
+    try {
+      // Process ingredients - split by commas and newlines
+      const processedIngredients = ingredients
+        .split(/[\n,]+/)
+        .map(item => item.trim())
+        .filter(item => item !== '');
+      
+      // Upload image if present
+      let finalImageUrl = imageUrl;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage(imageFile);
+        if (uploadedUrl) {
+          finalImageUrl = uploadedUrl;
+        }
+      }
+      
+      // Create new meal in Supabase
+      await createMeal({
+        title: title.trim(),
+        ingredients: processedIngredients,
+        image_path: finalImageUrl || null,
+        meal_type: mealType,
+        day: format(date || new Date(), 'EEEE').substring(0, 3)
+      });
+      
+      toast({
+        title: "Success!",
+        description: "Meal idea added to calendar",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error adding meal:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add meal. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
+
+  const handleImageSelected = (file: File) => {
+    setImageFile(file);
+    // Create a temporary object URL for preview
+    const objectUrl = URL.createObjectURL(file);
+    setImageUrl(objectUrl);
+  };
+
   return (
     <div className="pb-20">
       {/* Header - with reduced padding */}
@@ -110,7 +125,7 @@ const AddMeal = () => {
           onDateChange={setDate} 
         />
         
-        {/* Meal type selection - FIX HERE: proper onChange handler */}
+        {/* Meal type selection */}
         <MealTypeSelector 
           value={mealType} 
           onChange={(value) => setMealType(value)} 
@@ -128,22 +143,16 @@ const AddMeal = () => {
         </div>
         
         {/* Image preview */}
-        <div onClick={handleImageClick} className="cursor-pointer">
-          <label className="block text-sm font-medium mb-1">Recipe Image (click to change)</label>
+        <div className="cursor-pointer">
+          <label className="block text-sm font-medium mb-1">Recipe Image</label>
           <div className="w-full max-h-48 rounded-lg overflow-hidden">
             <RecipeImagePreview 
               imageUrl={imageUrl}
               title={title}
               onError={() => setImageUrl("")}
+              onImageSelected={handleImageSelected}
             />
           </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            className="hidden"
-          />
         </div>
         
         <div>
@@ -160,8 +169,9 @@ const AddMeal = () => {
         <Button 
           type="submit" 
           className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full"
+          disabled={isSubmitting || isUploading}
         >
-          Add Idea
+          {isSubmitting || isUploading ? "Adding..." : "Add Idea"}
         </Button>
       </form>
     </div>

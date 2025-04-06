@@ -39,19 +39,7 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onImageSelected) {
-      // Create a new FileReader to read the file
-      const reader = new FileReader();
-      
-      // Set up the onload handler
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          // Pass the file to the parent component
-          onImageSelected(file);
-        }
-      };
-      
-      // Read the file as a data URL
-      reader.readAsDataURL(file);
+      onImageSelected(file);
     }
   };
   
