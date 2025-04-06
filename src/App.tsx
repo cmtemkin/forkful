@@ -8,6 +8,7 @@ import Layout from "./components/Layout";
 import VotingFeed from "./pages/VotingFeed";
 import CalendarView from "./pages/CalendarView";
 import AddMeal from "./pages/AddMeal";
+import EditMeal from "./pages/EditMeal";
 import MealDetail from "./pages/MealDetail";
 import GroceryList from "./pages/GroceryList";
 import NotFound from "./pages/NotFound";
@@ -23,6 +24,7 @@ const App = () => (
             <Route index element={<VotingFeed />} />
             <Route path="calendar" element={<CalendarView />} />
             <Route path="add-meal" element={<AddMeal />} />
+            <Route path="edit-meal/:id" element={<EditMeal />} />
             <Route path="meal/:id" element={<MealDetail />} />
             <Route path="grocery-list" element={<GroceryList />} />
           </Route>

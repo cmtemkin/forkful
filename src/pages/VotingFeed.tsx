@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Badge } from "@/components/ui/badge";
 
 // Sample data - in a real app, this would come from an API
 const mockMeals = [
@@ -78,11 +79,31 @@ const VotingFeed = () => {
     return <LoadingSpinner />;
   }
 
+  // Function to get badge color based on day
+  const getDayBadgeColor = (day: string) => {
+    switch(day) {
+      case 'Monday': return 'bg-blue-100 text-blue-800';
+      case 'Tuesday': return 'bg-purple-100 text-purple-800';
+      case 'Wednesday': return 'bg-green-100 text-green-800';
+      case 'Thursday': return 'bg-yellow-100 text-yellow-800';
+      case 'Friday': return 'bg-red-100 text-red-800';
+      case 'Saturday': return 'bg-indigo-100 text-indigo-800';
+      case 'Sunday': return 'bg-pink-100 text-pink-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
     <div className="pb-20">
-      {/* Header */}
-      <div className="bg-chow-primary text-white px-4 py-6">
-        <h1 className="text-2xl font-bold">{currentDayMeal}</h1>
+      {/* Header with logo */}
+      <div className="bg-white text-chow-primary px-4 py-4 flex justify-center border-b">
+        <div className="w-32">
+          <img 
+            src="/lovable-uploads/92e6b1a0-a2b6-46ee-a824-f1a8c25153b6.png" 
+            alt="ChowDown" 
+            className="w-full invert" 
+          />
+        </div>
       </div>
       
       {/* Filter tabs */}
@@ -105,20 +126,27 @@ const VotingFeed = () => {
       <div className="px-4 py-4 space-y-4">
         {meals.length > 0 ? (
           meals.map(meal => (
-            <MealCard
-              key={meal.id}
-              id={meal.id}
-              title={meal.title}
-              submittedBy={meal.submittedBy || 'Anonymous'}
-              image={meal.image}
-              upvotes={meal.upvotes}
-              downvotes={meal.downvotes}
-            />
+            <div key={meal.id} className="relative">
+              <div className="absolute -top-2 left-24 z-10">
+                <div className={`rounded-full px-2 py-0.5 text-xs font-medium ${getDayBadgeColor(meal.day)}`}>
+                  {meal.day}
+                </div>
+              </div>
+              <MealCard
+                id={meal.id}
+                title={meal.title}
+                submittedBy={meal.submittedBy || 'Anonymous'}
+                image={meal.image}
+                upvotes={meal.upvotes}
+                downvotes={meal.downvotes}
+                dayMealtime={`${meal.day} ${meal.mealType}`}
+              />
+            </div>
           ))
         ) : (
           <EmptyState
             title="No meal ideas yet"
-            description="Add your first meal idea for Monday Dinner"
+            description="Add your first meal idea"
             actionLink="/add-meal"
             actionText="Add New Idea"
           />

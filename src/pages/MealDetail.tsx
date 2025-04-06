@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2, ShoppingCart, Edit, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
-import { format, addDays } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,12 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { ImageIcon } from 'lucide-react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 const MealDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +36,7 @@ const MealDetail = () => {
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [localUpvotes, setLocalUpvotes] = useState(0);
   const [localDownvotes, setLocalDownvotes] = useState(0);
+  const [date, setDate] = useState<Date | undefined>(undefined);
   
   useEffect(() => {
     // Get meal from localStorage
@@ -43,6 +50,22 @@ const MealDetail = () => {
         setIsLocked(foundMeal.isLocked || false);
         setLocalUpvotes(foundMeal.upvotes);
         setLocalDownvotes(foundMeal.downvotes);
+        
+        // Calculate date from day of week
+        if (foundMeal.day) {
+          const today = new Date();
+          const dayMap: {[key: string]: number} = {
+            'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 0
+          };
+          const mealDay = dayMap[foundMeal.day];
+          if (mealDay !== undefined) {
+            let daysToAdd = mealDay - today.getDay();
+            if (daysToAdd <= 0) daysToAdd += 7; // If it's in the past, go to next week
+            const mealDate = new Date(today);
+            mealDate.setDate(today.getDate() + daysToAdd);
+            setDate(mealDate);
+          }
+        }
       }
     }
     setIsLoading(false);
@@ -62,6 +85,35 @@ const MealDetail = () => {
     }
   };
   
+  const handleDateChange = (newDate: Date | undefined) => {
+    if (!newDate || !meal) return;
+    
+    setDate(newDate);
+    
+    // Update the day of week based on the selected date
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const newDay = days[newDate.getDay()];
+    
+    // Update the meal locally
+    const updatedMeal = { ...meal, day: newDay };
+    setMeal(updatedMeal);
+    
+    // Update the meal in localStorage
+    const storedMeals = localStorage.getItem('chowdown_meals');
+    if (storedMeals) {
+      const allMeals = JSON.parse(storedMeals);
+      const updatedMeals = allMeals.map((m: any) => 
+        m.id === id ? { ...m, day: newDay } : m
+      );
+      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+      
+      toast({
+        title: "Date updated",
+        description: `This meal is now scheduled for ${newDay}.`
+      });
+    }
+  };
+  
   const handleAddToGroceries = () => {
     if (!meal?.ingredients || meal.ingredients.length === 0) {
       toast({
@@ -76,10 +128,19 @@ const MealDetail = () => {
     const existingList = localStorage.getItem('chowdown_groceries');
     const groceryList = existingList ? JSON.parse(existingList) : [];
     
+    // Process all ingredients, ensuring they are individual items
+    const processedIngredients = meal.ingredients.flatMap((ingredient: string) => {
+      // If the ingredient contains commas, split it
+      if (ingredient.includes(',')) {
+        return ingredient.split(',').map(i => i.trim()).filter(i => i !== '');
+      }
+      return ingredient.trim();
+    });
+    
     // Add each ingredient as a separate item if not already in the list
     const existingItems = new Set(groceryList.map((item: any) => item.name.toLowerCase()));
     
-    const newItems = meal.ingredients
+    const newItems = processedIngredients
       .filter((ingredient: string) => !existingItems.has(ingredient.toLowerCase()))
       .map((ingredient: string) => ({
         id: `grocery-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -123,6 +184,10 @@ const MealDetail = () => {
     });
     
     navigate('/calendar');
+  };
+  
+  const handleEditMeal = () => {
+    navigate(`/edit-meal/${id}`);
   };
   
   const generatePlaceholderColor = (title: string) => {
@@ -238,24 +303,10 @@ const MealDetail = () => {
     }
   };
   
-  // Calculate a display date based on the day of the week
+  // Format date as a string
   const getDisplayDate = () => {
-    if (!meal) return "";
-    
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const dayMap: {[key: string]: number} = {
-      'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0
-    };
-    
-    const mealDay = dayMap[meal.day];
-    if (mealDay === undefined) return "";
-    
-    let daysToAdd = mealDay - dayOfWeek;
-    if (daysToAdd < 0) daysToAdd += 7; // If it's in the past, go to next week
-    
-    const mealDate = addDays(today, daysToAdd);
-    return format(mealDate, 'MMM d');
+    if (!date) return "";
+    return format(date, 'MMM d');
   };
   
   if (isLoading) {
@@ -274,9 +325,13 @@ const MealDetail = () => {
   
   return (
     <div className="pb-20">
-      <div className="fixed top-0 left-0 right-0 bg-white z-30 flex items-center px-4 py-3 border-b">
+      <div className="fixed top-0 left-0 right-0 bg-white z-30 flex items-center justify-between px-4 py-3 border-b">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
+        </button>
+        <div className="flex-1"></div>
+        <button onClick={handleEditMeal} className="ml-4">
+          <Edit className="h-6 w-6 text-chow-primary" />
         </button>
       </div>
       
@@ -303,10 +358,28 @@ const MealDetail = () => {
       
       <div className="px-4 py-6">
         <h1 className="text-3xl font-bold mb-2">{meal.title}</h1>
-        <div className="flex items-center text-gray-600 mb-6">
+        <div className="flex items-center text-gray-600 mb-2">
           <span>{meal.day} {meal.mealType}</span>
           <span className="mx-2">•</span>
-          <span>{getDisplayDate()}</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex items-center text-sm text-chow-primary">
+                <span>{getDisplayDate()}</span>
+                <Calendar className="h-4 w-4 ml-1" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={date}
+                onSelect={handleDateChange}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="text-sm text-gray-500 mb-6">
+          {meal.submittedBy ? `Added by ${meal.submittedBy}` : ""}
         </div>
         
         <h2 className="text-xl font-semibold mb-2">Ingredients</h2>

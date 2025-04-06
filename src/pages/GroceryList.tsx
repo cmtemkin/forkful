@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Clipboard, Trash2, CheckSquare, Square, Edit, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import EmptyState from '../components/EmptyState';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { SwipeAction } from '../components/SwipeAction';
 
 interface GroceryItem {
@@ -16,6 +17,7 @@ const GroceryList = () => {
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Load grocery items from localStorage
