@@ -10,17 +10,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
+import { Tables } from '@/integrations/supabase/types';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters" }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type Profile = {
-  id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-};
+type Profile = Tables<'profiles'>;
 
 const Profile = () => {
   const { user } = useAuth();
@@ -52,7 +49,7 @@ const Profile = () => {
 
         setProfile(data);
         form.reset({
-          displayName: data.display_name || "",
+          displayName: data?.display_name || "",
         });
       } catch (error) {
         console.error('Error fetching profile:', error);
