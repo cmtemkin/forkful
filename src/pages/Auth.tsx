@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -12,39 +11,54 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
 
-// Form schema for validation
-const formSchema = z.object({
+// Separate schemas for email and password
+const emailSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+const passwordSchema = z.object({
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
 const Auth = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupStep, setSignupStep] = useState<'email' | 'password'>('email');
   
   // If user is already logged in, redirect to home
   if (session) {
     return <Navigate to="/" replace />;
   }
 
-  // Create form
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  // Email form
+  const emailForm = useForm<{ email: string }>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { email: "" },
   });
 
-  const handleSignUp = async (values: FormValues) => {
+  // Password form
+  const passwordForm = useForm<{ password: string; confirmPassword: string }>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { password: "", confirmPassword: "" },
+  });
+
+  const handleEmailSubmit = (values: { email: string }) => {
+    setSignupEmail(values.email);
+    setSignupStep('password');
+  };
+
+  const handleSignUp = async (values: { password: string }) => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signUp({
-        email: values.email,
+        email: signupEmail,
         password: values.password,
       });
 
@@ -59,38 +73,11 @@ const Auth = () => {
           title: "Success!",
           description: "Check your email for a confirmation link.",
         });
-      }
-    } catch (error) {
-      toast({
-        title: "Error signing up",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignIn = async (values: FormValues) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (error) {
-        toast({
-          title: "Error signing in",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
         navigate("/feed");
       }
     } catch (error) {
       toast({
-        title: "Error signing in",
+        title: "Error signing up",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
@@ -104,11 +91,97 @@ const Auth = () => {
       <h1 className="text-3xl font-outfit font-bold text-primary-coral mb-8">forkful</h1>
       
       <div className="w-full max-w-md bg-white rounded-lg shadow-sm p-8">
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs defaultValue="signup" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="signup">
+            {signupStep === 'email' && (
+              <div>
+                <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Create an account</h2>
+                <Form {...emailForm}>
+                  <form onSubmit={emailForm.handleSubmit(handleEmailSubmit)} className="space-y-4">
+                    <FormField
+                      control={emailForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your@email.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary-coral hover:bg-primary-coral/90"
+                    >
+                      Continue
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            )}
+
+            {signupStep === 'password' && (
+              <div>
+                <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Choose a password</h2>
+                <Form {...passwordForm}>
+                  <form onSubmit={passwordForm.handleSubmit(handleSignUp)} className="space-y-4">
+                    <FormField
+                      control={passwordForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={passwordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirm Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary-coral hover:bg-primary-coral/90"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Creating account..." : "Sign Up"}
+                    </Button>
+
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      className="w-full mt-2"
+                      onClick={() => setSignupStep('email')}
+                    >
+                      Back
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            )}
+          </TabsContent>
           
           <TabsContent value="login">
             <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Welcome back</h2>
@@ -148,49 +221,6 @@ const Auth = () => {
                   disabled={isLoading}
                 >
                   {isLoading ? "Logging in..." : "Login"}
-                </Button>
-              </form>
-            </Form>
-          </TabsContent>
-          
-          <TabsContent value="signup">
-            <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Create an account</h2>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSignUp)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary-coral hover:bg-primary-coral/90"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>
             </Form>
