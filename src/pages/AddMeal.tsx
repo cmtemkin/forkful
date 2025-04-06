@@ -5,16 +5,19 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from '@/components/LoadingSpinner';
 import DateSelector from '@/components/meal/DateSelector';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
 import RecipeUrlInput from '@/components/meal/RecipeUrlInput';
 import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
+import { format } from 'date-fns';
 
 const AddMeal = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+  
   const queryParams = new URLSearchParams(location.search);
   const defaultDay = queryParams.get('day') || '';
   const defaultMealType = queryParams.get('mealType') || '';
@@ -30,7 +33,40 @@ const AddMeal = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Here you would typically send the data to your backend
+    if (!title.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a meal name",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Get current meals from localStorage or initialize with empty array
+    const existingMeals = localStorage.getItem('chowdown_meals');
+    const meals = existingMeals ? JSON.parse(existingMeals) : [];
+    
+    // Create a new meal object
+    const newMeal = {
+      id: `meal-${Date.now()}`, // Generate a unique ID using timestamp
+      title: title.trim(),
+      submittedBy: 'You', // In a real app, this would be the user's name
+      image: imageUrl || `https://source.unsplash.com/photo-${Math.floor(Math.random() * 100000)}`,
+      upvotes: 0,
+      downvotes: 0,
+      day: format(date || new Date(), 'EEEE').substring(0, 3) as any, // Convert to 'Mon', 'Tue', etc.
+      mealType: mealType,
+      ingredients: ingredients,
+      dateAdded: new Date().toISOString()
+    };
+    
+    // Add the new meal to the beginning of the array
+    const updatedMeals = [newMeal, ...meals];
+    
+    // Save to localStorage
+    localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+    
+    // Log for debugging
     console.log({ date, mealType, title, ingredients, recipeUrl, imageUrl });
     
     // Show success toast and navigate back

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import MealCard from '../components/MealCard';
@@ -40,13 +40,39 @@ const mockMeals = [
   }
 ];
 
+// Get the stored meals from localStorage or use the mock data
+const getInitialMeals = () => {
+  const storedMeals = localStorage.getItem('chowdown_meals');
+  return storedMeals ? JSON.parse(storedMeals) : mockMeals;
+};
+
 const VotingFeed = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('By Date');
-  const [meals, setMeals] = useState(mockMeals);
+  const [meals, setMeals] = useState(getInitialMeals);
   
   // Get the current day and mealtime for the header
   const currentDayMeal = 'Monday Dinner';
+  
+  useEffect(() => {
+    // Update localStorage whenever meals change
+    localStorage.setItem('chowdown_meals', JSON.stringify(meals));
+  }, [meals]);
+
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+    
+    // Sort meals based on the selected filter
+    const sortedMeals = [...meals];
+    if (filter === 'By Votes') {
+      sortedMeals.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
+    } else {
+      // By Date - use the original order or sort by date if available
+      sortedMeals.sort((a, b) => a.id.localeCompare(b.id));
+    }
+    
+    setMeals(sortedMeals);
+  };
   
   if (isLoading) {
     return <LoadingSpinner />;
@@ -61,23 +87,29 @@ const VotingFeed = () => {
       
       {/* Filter tabs */}
       <div className="px-4 py-2 bg-white border-b">
-        <button className="px-2 py-2 tab-active">
-          {selectedFilter}
+        <button 
+          className={`px-2 py-2 ${selectedFilter === 'By Date' ? 'tab-active' : 'text-gray-500'}`}
+          onClick={() => handleFilterChange('By Date')}
+        >
+          By Date
         </button>
-        <button className="px-2 py-2 ml-4 text-gray-500">
+        <button 
+          className={`px-2 py-2 ml-4 ${selectedFilter === 'By Votes' ? 'tab-active' : 'text-gray-500'}`}
+          onClick={() => handleFilterChange('By Votes')}
+        >
           By Votes
         </button>
       </div>
       
       {/* Meal cards */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 space-y-4">
         {meals.length > 0 ? (
           meals.map(meal => (
             <MealCard
               key={meal.id}
               id={meal.id}
               title={meal.title}
-              submittedBy={meal.submittedBy}
+              submittedBy={meal.submittedBy || 'Anonymous'}
               image={meal.image}
               upvotes={meal.upvotes}
               downvotes={meal.downvotes}
