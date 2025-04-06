@@ -17,7 +17,7 @@ export interface Meal {
   user_vote?: 'upvote' | 'downvote' | null;
 }
 
-// Create a new meal - completely removed all household concepts
+// Create a new meal - completely standalone without any household references
 export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<Meal> => {
   const { data: userData } = await supabase.auth.getUser();
   
@@ -25,16 +25,22 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
     throw new Error('User not authenticated');
   }
   
+  // Create a simplified mealData object with only the necessary fields
   const mealData = {
-    ...meal,
-    created_by: userData.user.id,
-    // Explicitly set household_id to null to avoid any RLS policy issues
-    household_id: null
+    title: meal.title,
+    ingredients: meal.ingredients,
+    image_path: meal.image_path || null,
+    source_url: meal.source_url || null,
+    meal_type: meal.meal_type,
+    day: meal.day,
+    created_by: userData.user.id
+    // Explicitly NOT including household_id to avoid any RLS policy issues
   };
   
   console.log('Creating meal with data:', mealData);
   
   try {
+    // Insert the new meal into the database
     const { data, error } = await supabase
       .from('meals')
       .insert(mealData)
