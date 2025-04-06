@@ -16,7 +16,6 @@ const Logo = ({ className = '', size = 'medium', inverted = false }: LogoProps) 
   
   const iconColor = inverted ? "text-[#FF7A5A]" : "text-white";
   const bgColor = inverted ? "bg-white" : "bg-[#FF7A5A]";
-  const textColor = inverted ? "text-[#FF7A5A]" : "text-white";
   
   return (
     <div className={`flex items-center ${className}`}>

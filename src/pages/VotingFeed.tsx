@@ -4,7 +4,6 @@ import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
 import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
-import Logo from '../components/Logo';
 
 // Sample data - in a real app, this would come from an API
 const mockMeals = [
@@ -114,11 +113,6 @@ const VotingFeed = () => {
 
   return (
     <div className="pb-20">
-      {/* Header with logo */}
-      <div className="bg-[#FF7A5A] text-white px-4 py-4 flex justify-center">
-        <Logo size="medium" />
-      </div>
-      
       {/* Filter tabs */}
       <div className="px-4 py-2 bg-white border-b">
         <button 
