@@ -129,8 +129,8 @@ const VotingFeed = () => {
         </button>
       </div>
       
-      {/* Meal cards */}
-      <div className="px-4 py-4 space-y-4">
+      {/* Meal cards container with relative positioning */}
+      <div className="px-4 py-4 space-y-4 relative">
         {meals.length > 0 ? (
           meals.map(meal => (
             <div key={meal.id} className="relative">
@@ -164,17 +164,17 @@ const VotingFeed = () => {
             actionText="Add New Idea"
           />
         )}
-      </div>
-      
-      {/* Floating add button */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <Link 
-          to="/add-meal"
-          className="bg-primary-coral text-white h-14 w-14 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
-          aria-label="Add new idea"
-        >
-          <Plus size={24} />
-        </Link>
+        
+        {/* Add button positioned within the meal cards container */}
+        <div className="absolute bottom-4 right-4 z-50">
+          <Link 
+            to="/add-meal"
+            className="bg-primary-coral text-white h-14 w-14 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
+            aria-label="Add new idea"
+          >
+            <Plus size={24} />
+          </Link>
+        </div>
       </div>
     </div>
   );
