@@ -170,9 +170,9 @@ const EditMeal = () => {
         <button 
           onClick={handleSubmit(onSubmit)}
           disabled={isLoading}
-          className="text-primary-coral"
+          className="text-primary-coral hover:text-primary-coral/80 transition-colors"
         >
-          <Save className="h-6 w-6" />
+          <Save className="h-6 w-6 text-primary-coral" strokeWidth={2.5} />
         </button>
       </div>
       
