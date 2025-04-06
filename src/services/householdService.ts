@@ -54,7 +54,7 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
       created_at,
       created_by
     `)
-    .or(`created_by.eq.${userId},id.in.(${householdIds.join(',')})`)
+    .or(`created_by.eq.${userId},id.in.(${householdIds.length > 0 ? householdIds.join(',') : 'null'})`)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -64,6 +64,7 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   
   // For each household, fetch the members
   const householdsWithMembers = await Promise.all(data.map(async (household) => {
+    // First get members without profile data
     const { data: members, error: membersError } = await supabase
       .from('household_members')
       .select(`
@@ -71,8 +72,7 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
         household_id,
         user_id,
         role,
-        joined_at,
-        profiles:profiles(display_name, avatar_url)
+        joined_at
       `)
       .eq('household_id', household.id);
     
@@ -84,19 +84,34 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
       };
     }
     
-    // Format the member data to match our expected structure
-    const formattedMembers = members.map(member => ({
-      id: member.id,
-      household_id: member.household_id,
-      user_id: member.user_id,
-      role: member.role,
-      joined_at: member.joined_at,
-      profile: member.profiles
+    // Then for each member, get their profile separately
+    const membersWithProfiles = await Promise.all(members.map(async (member) => {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('display_name, avatar_url')
+        .eq('id', member.user_id)
+        .maybeSingle();
+      
+      if (profileError || !profileData) {
+        console.warn(`Could not fetch profile for user ${member.user_id}`, profileError);
+        return {
+          ...member,
+          profile: {
+            display_name: 'Unknown User',
+            avatar_url: undefined
+          }
+        };
+      }
+      
+      return {
+        ...member,
+        profile: profileData
+      };
     }));
     
     return {
       ...household,
-      members: formattedMembers
+      members: membersWithProfiles
     };
   }));
 
@@ -156,7 +171,7 @@ export const getHouseholdById = async (id: string): Promise<Household> => {
     throw error;
   }
 
-  // Then get the members
+  // Then get the members without profile data
   const { data: members, error: membersError } = await supabase
     .from('household_members')
     .select(`
@@ -164,8 +179,7 @@ export const getHouseholdById = async (id: string): Promise<Household> => {
       household_id,
       user_id,
       role,
-      joined_at,
-      profiles:profiles(display_name, avatar_url)
+      joined_at
     `)
     .eq('household_id', id);
 
@@ -174,19 +188,34 @@ export const getHouseholdById = async (id: string): Promise<Household> => {
     throw membersError;
   }
 
-  // Format the member data to match our expected structure
-  const formattedMembers = members.map(member => ({
-    id: member.id,
-    household_id: member.household_id,
-    user_id: member.user_id,
-    role: member.role,
-    joined_at: member.joined_at,
-    profile: member.profiles
+  // For each member, get their profile separately
+  const membersWithProfiles = await Promise.all(members.map(async (member) => {
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('id', member.user_id)
+      .maybeSingle();
+    
+    if (profileError || !profileData) {
+      console.warn(`Could not fetch profile for user ${member.user_id}`, profileError);
+      return {
+        ...member,
+        profile: {
+          display_name: 'Unknown User',
+          avatar_url: undefined
+        }
+      };
+    }
+    
+    return {
+      ...member,
+      profile: profileData
+    };
   }));
 
   return {
     ...household,
-    members: formattedMembers
+    members: membersWithProfiles
   };
 };
 
