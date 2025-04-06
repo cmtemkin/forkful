@@ -51,9 +51,12 @@ export function useMealDetails(id: string | undefined) {
         const fetchedMeal = await getMealById(id);
         
         if (fetchedMeal) {
+          // Ensure all required properties exist with default values if needed
           const mealWithLockStatus: Meal = {
             ...fetchedMeal,
-            isLocked: false // We don't store lock status in DB yet
+            isLocked: false, // We don't store lock status in DB yet
+            upvotes: fetchedMeal.upvotes || 0,
+            downvotes: fetchedMeal.downvotes || 0
           };
           
           setMeal(mealWithLockStatus);
@@ -105,7 +108,7 @@ export function useMealDetails(id: string | undefined) {
     if (!meal) return;
     
     try {
-      const updatedMeal = { 
+      const updatedMeal: Meal = { 
         ...meal,
         isLocked: !meal.isLocked
       };
@@ -179,10 +182,15 @@ export function useMealDetails(id: string | undefined) {
       const result = await updateMeal(id, updatedMeal);
       
       // Make sure we preserve the lock status that might not be in the database
-      setMeal({
+      // Ensure all required properties exist with default values
+      const updatedFullMeal: Meal = {
         ...result,
+        upvotes: result.upvotes || meal.upvotes || 0,
+        downvotes: result.downvotes || meal.downvotes || 0,
         isLocked: meal.isLocked
-      });
+      };
+      
+      setMeal(updatedFullMeal);
       
       setIsEditing(false);
       

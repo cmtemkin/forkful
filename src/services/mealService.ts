@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Meal {
@@ -12,13 +11,13 @@ export interface Meal {
   created_by: string;
   created_at: string;
   updated_at: string;
-  upvotes?: number;
-  downvotes?: number;
+  upvotes: number;
+  downvotes: number;
   user_vote?: 'upvote' | 'downvote' | null;
 }
 
 // Create a new meal - completely standalone without any household references
-export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<Meal> => {
+export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by' | 'upvotes' | 'downvotes'>): Promise<Meal> => {
   const { data: userData, error: authError } = await supabase.auth.getUser();
   
   if (authError) {
@@ -60,7 +59,12 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
       throw new Error('No data returned after meal creation');
     }
 
-    return data;
+    // Add default values for upvotes and downvotes
+    return {
+      ...data,
+      upvotes: 0,
+      downvotes: 0
+    };
   } catch (error) {
     console.error('Failed to create meal:', error);
     throw error;
