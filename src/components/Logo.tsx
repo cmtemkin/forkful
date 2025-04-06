@@ -9,22 +9,22 @@ interface LogoProps {
 
 const Logo = ({ className = '', size = 'medium', inverted = false }: LogoProps) => {
   const sizes = {
-    small: 'h-8',
+    small: 'h-6',
     medium: 'h-12',
     large: 'h-24'
   };
   
-  const iconColor = inverted ? "text-[#FF7A5A]" : "text-white";
-  const bgColor = inverted ? "bg-white" : "bg-[#FF7A5A]";
+  const iconColor = inverted ? "text-primary-coral" : "text-white";
+  const bgColor = inverted ? "bg-white" : "bg-primary-coral";
   
   return (
     <div className={`flex items-center ${className}`}>
-      <div className={`${bgColor} rounded-2xl p-4 ${sizes[size]}`}>
+      <div className={`${bgColor} rounded-full p-1 flex items-center justify-center ${sizes[size]}`}>
         <svg 
           viewBox="0 0 24 24" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg" 
-          className={`${sizes[size]} ${iconColor}`}
+          className={`${size === 'small' ? 'h-4 w-4' : sizes[size]} ${iconColor}`}
         >
           {/* Fork icon */}
           <path 
@@ -36,7 +36,7 @@ const Logo = ({ className = '', size = 'medium', inverted = false }: LogoProps) 
           />
         </svg>
       </div>
-      <span className="font-outfit font-bold text-2xl ml-3 text-gray-800">Forkful</span>
+      {size !== 'small' && <span className="font-outfit font-bold text-2xl ml-3 text-gray-800">Forkful</span>}
     </div>
   );
 };
