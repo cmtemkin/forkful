@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ThumbsUp, ThumbsDown, Utensils } from 'lucide-react';
@@ -115,9 +114,19 @@ const MealCard = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <div className="relative pr-16">  {/* Increased right padding to accommodate button */}
-          <div className="mb-2">
-            <h3 className="text-xl font-bold text-charcoal-gray leading-tight line-clamp-1 pr-12">{title}</h3>
+        <div className="relative pr-16">
+          <div className="absolute top-1/2 right-4 transform -translate-y-1/2">
+            {onTogglePick && (
+              <PickMealButton 
+                isPicked={isPicked} 
+                onTogglePick={() => {}} 
+                className="absolute top-1/2 right-0 -translate-y-1/2"
+              />
+            )}
+          </div>
+          
+          <div className="mb-2 pr-16">
+            <h3 className="text-xl font-bold text-charcoal-gray leading-tight line-clamp-1">{title}</h3>
             <p className="text-sm text-slate-accent mt-0.5">{submittedBy}</p>
           </div>
           
@@ -125,19 +134,6 @@ const MealCard = ({
             {dayBadge}
             {mealTypeBadge}
           </div>
-          
-          {onTogglePick && (
-            <div 
-              className="absolute top-0 right-0 flex justify-end" 
-              onClick={handlePickToggle}
-            >
-              <PickMealButton 
-                isPicked={isPicked} 
-                onTogglePick={() => {}} 
-                className="ml-auto" // Ensures button is pushed to the far right
-              />
-            </div>
-          )}
           
           <div className="flex items-center gap-3">
             <button 
