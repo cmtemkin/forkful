@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Meal {
@@ -9,7 +8,6 @@ export interface Meal {
   source_url?: string;
   meal_type: string;
   day: string;
-  household_id?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -18,7 +16,7 @@ export interface Meal {
   user_vote?: 'upvote' | 'downvote' | null;
 }
 
-// Create a new meal
+// Create a new meal - completely removed household references
 export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<Meal> => {
   const { data: userData } = await supabase.auth.getUser();
   
@@ -26,10 +24,8 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
     throw new Error('User not authenticated');
   }
   
-  // Create meal without any household reference
   const mealData = {
     ...meal,
-    household_id: null,  // Always set to null to avoid any household-related issues
     created_by: userData.user.id
   };
   
@@ -54,7 +50,7 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
   }
 };
 
-// Get meals for a household with vote counts
+// Get all meals for the current user
 export const getHouseholdMeals = async (): Promise<Meal[]> => {
   // Get user ID for the current user
   const { data: userData } = await supabase.auth.getUser();
@@ -74,7 +70,6 @@ export const getHouseholdMeals = async (): Promise<Meal[]> => {
       source_url,
       meal_type,
       day,
-      household_id,
       created_by,
       created_at,
       updated_at
@@ -150,7 +145,6 @@ export const getMealById = async (id: string): Promise<Meal> => {
       source_url,
       meal_type,
       day,
-      household_id,
       created_by,
       created_at,
       updated_at
@@ -303,7 +297,6 @@ export const getMealsByDayAndType = async (day: string, mealType: string): Promi
       source_url,
       meal_type,
       day,
-      household_id,
       created_by,
       created_at,
       updated_at

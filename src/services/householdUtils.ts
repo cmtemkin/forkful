@@ -1,6 +1,5 @@
 
-// This service is deprecated as the Households feature is coming soon
-// All functionality has been disabled to avoid interference with the rest of the app
+// This service is completely disabled as the Households feature is coming soon
 
 import { supabase } from "@/integrations/supabase/client";
 import { HouseholdMember } from "@/types/household";

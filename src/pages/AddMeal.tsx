@@ -91,8 +91,7 @@ const AddMeal = () => {
         ingredients: processedIngredients,
         image_path: finalImageUrl || null,
         meal_type: mealType,
-        day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon',
-        household_id: null // Always null to avoid household issues
+        day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon'
       });
       
       // Create new meal in Supabase
@@ -116,12 +115,9 @@ const AddMeal = () => {
       
       if (error instanceof Error) {
         errorMessage = error.message;
-        // If the error is related to household policies, provide a more specific message
-        if (errorMessage.includes("household") || errorMessage.includes("policy")) {
-          errorMessage = "There was a policy error with adding the meal. Please try again.";
-          setError(errorMessage);
-        }
       }
+      
+      setError(errorMessage);
       
       toast({
         title: "Error",
