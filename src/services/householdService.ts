@@ -64,36 +64,45 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   
   // For each household, fetch the members
   const householdsWithMembers = await Promise.all(data.map(async (household) => {
-    // First get members without profile data
-    const { data: members, error: membersError } = await supabase
-      .from('household_members')
-      .select(`
-        id,
-        household_id,
-        user_id,
-        role,
-        joined_at
-      `)
-      .eq('household_id', household.id);
-    
-    if (membersError) {
-      console.error(`Error fetching members for household ${household.id}:`, membersError);
-      return {
-        ...household,
-        members: []
-      };
-    }
-    
-    // Then for each member, get their profile separately
-    const membersWithProfiles = await Promise.all(members.map(async (member) => {
+    const members = await getHouseholdMembers(household.id);
+    return {
+      ...household,
+      members
+    };
+  }));
+
+  return householdsWithMembers;
+};
+
+// Helper function to get household members with profiles
+async function getHouseholdMembers(householdId: string): Promise<HouseholdMember[]> {
+  // Get members without profile data
+  const { data: members, error: membersError } = await supabase
+    .from('household_members')
+    .select(`
+      id,
+      household_id,
+      user_id,
+      role,
+      joined_at
+    `)
+    .eq('household_id', householdId);
+  
+  if (membersError || !members) {
+    console.error(`Error fetching members for household ${householdId}:`, membersError);
+    return [];
+  }
+  
+  // For each member, get their profile separately
+  const membersWithProfiles = await Promise.all(members.map(async (member) => {
+    try {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('display_name, avatar_url')
         .eq('id', member.user_id)
-        .maybeSingle();
+        .single();
       
       if (profileError || !profileData) {
-        console.warn(`Could not fetch profile for user ${member.user_id}`, profileError);
         return {
           ...member,
           profile: {
@@ -107,16 +116,20 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
         ...member,
         profile: profileData
       };
-    }));
-    
-    return {
-      ...household,
-      members: membersWithProfiles
-    };
+    } catch (error) {
+      console.warn(`Could not fetch profile for user ${member.user_id}`, error);
+      return {
+        ...member,
+        profile: {
+          display_name: 'Unknown User',
+          avatar_url: undefined
+        }
+      };
+    }
   }));
-
-  return householdsWithMembers;
-};
+  
+  return membersWithProfiles;
+}
 
 // Create a new household
 export const createHousehold = async (name: string): Promise<Household> => {
@@ -171,51 +184,12 @@ export const getHouseholdById = async (id: string): Promise<Household> => {
     throw error;
   }
 
-  // Then get the members without profile data
-  const { data: members, error: membersError } = await supabase
-    .from('household_members')
-    .select(`
-      id,
-      household_id,
-      user_id,
-      role,
-      joined_at
-    `)
-    .eq('household_id', id);
-
-  if (membersError) {
-    console.error('Error fetching household members:', membersError);
-    throw membersError;
-  }
-
-  // For each member, get their profile separately
-  const membersWithProfiles = await Promise.all(members.map(async (member) => {
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('display_name, avatar_url')
-      .eq('id', member.user_id)
-      .maybeSingle();
-    
-    if (profileError || !profileData) {
-      console.warn(`Could not fetch profile for user ${member.user_id}`, profileError);
-      return {
-        ...member,
-        profile: {
-          display_name: 'Unknown User',
-          avatar_url: undefined
-        }
-      };
-    }
-    
-    return {
-      ...member,
-      profile: profileData
-    };
-  }));
+  // Get members with their profiles
+  const members = await getHouseholdMembers(id);
 
   return {
     ...household,
-    members: membersWithProfiles
+    members
   };
 };
 
