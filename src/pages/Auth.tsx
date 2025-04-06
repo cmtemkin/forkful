@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -24,6 +25,12 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Login schema
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(1, { message: "Please enter your password" }),
+});
+
 const Auth = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
@@ -47,6 +54,12 @@ const Auth = () => {
   const passwordForm = useForm<{ password: string; confirmPassword: string }>({
     resolver: zodResolver(passwordSchema),
     defaultValues: { password: "", confirmPassword: "" },
+  });
+  
+  // Login form
+  const loginForm = useForm<{ email: string; password: string }>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
   const handleEmailSubmit = (values: { email: string }) => {
@@ -78,6 +91,38 @@ const Auth = () => {
     } catch (error) {
       toast({
         title: "Error signing up",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleSignIn = async (values: { email: string; password: string }) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Error logging in",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully logged in.",
+        });
+        navigate("/feed");
+      }
+    } catch (error) {
+      toast({
+        title: "Error logging in",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
@@ -185,10 +230,10 @@ const Auth = () => {
           
           <TabsContent value="login">
             <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Welcome back</h2>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit(handleSignIn)} className="space-y-4">
                 <FormField
-                  control={form.control}
+                  control={loginForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -202,7 +247,7 @@ const Auth = () => {
                 />
                 
                 <FormField
-                  control={form.control}
+                  control={loginForm.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
