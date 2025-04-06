@@ -29,30 +29,78 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
     throw new Error('User not authenticated');
   }
   
+  const userId = userData.user.id;
+  
+  // First get all households where user is a member
+  const { data: memberHouseholds, error: memberError } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', userId);
+  
+  if (memberError) {
+    console.error('Error fetching household memberships:', memberError);
+    throw memberError;
+  }
+  
+  // Get household IDs where user is a member
+  const householdIds = memberHouseholds.map(h => h.household_id);
+  
+  // Now get all households where user is either the creator or a member
   const { data, error } = await supabase
     .from('households')
     .select(`
       id,
       name,
       created_at,
-      created_by,
-      members:household_members(
-        id,
-        household_id,
-        user_id,
-        role,
-        joined_at
-      )
+      created_by
     `)
-    .or(`created_by.eq.${userData.user.id},members.user_id.eq.${userData.user.id}`)
+    .or(`created_by.eq.${userId},id.in.(${householdIds.join(',')})`)
     .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching households:', error);
     throw error;
   }
+  
+  // For each household, fetch the members
+  const householdsWithMembers = await Promise.all(data.map(async (household) => {
+    const { data: members, error: membersError } = await supabase
+      .from('household_members')
+      .select(`
+        id,
+        household_id,
+        user_id,
+        role,
+        joined_at,
+        profiles:profiles(display_name, avatar_url)
+      `)
+      .eq('household_id', household.id);
+    
+    if (membersError) {
+      console.error(`Error fetching members for household ${household.id}:`, membersError);
+      return {
+        ...household,
+        members: []
+      };
+    }
+    
+    // Format the member data to match our expected structure
+    const formattedMembers = members.map(member => ({
+      id: member.id,
+      household_id: member.household_id,
+      user_id: member.user_id,
+      role: member.role,
+      joined_at: member.joined_at,
+      profile: member.profiles
+    }));
+    
+    return {
+      ...household,
+      members: formattedMembers
+    };
+  }));
 
-  return data || [];
+  return householdsWithMembers;
 };
 
 // Create a new household
@@ -91,21 +139,14 @@ export const createHousehold = async (name: string): Promise<Household> => {
 
 // Get household by ID
 export const getHouseholdById = async (id: string): Promise<Household> => {
-  const { data, error } = await supabase
+  // First get the household
+  const { data: household, error } = await supabase
     .from('households')
     .select(`
       id,
       name,
       created_at,
-      created_by,
-      members:household_members(
-        id,
-        household_id,
-        user_id,
-        role,
-        joined_at,
-        profiles:profiles(display_name, avatar_url)
-      )
+      created_by
     `)
     .eq('id', id)
     .single();
@@ -115,7 +156,38 @@ export const getHouseholdById = async (id: string): Promise<Household> => {
     throw error;
   }
 
-  return data;
+  // Then get the members
+  const { data: members, error: membersError } = await supabase
+    .from('household_members')
+    .select(`
+      id,
+      household_id,
+      user_id,
+      role,
+      joined_at,
+      profiles:profiles(display_name, avatar_url)
+    `)
+    .eq('household_id', id);
+
+  if (membersError) {
+    console.error('Error fetching household members:', membersError);
+    throw membersError;
+  }
+
+  // Format the member data to match our expected structure
+  const formattedMembers = members.map(member => ({
+    id: member.id,
+    household_id: member.household_id,
+    user_id: member.user_id,
+    role: member.role,
+    joined_at: member.joined_at,
+    profile: member.profiles
+  }));
+
+  return {
+    ...household,
+    members: formattedMembers
+  };
 };
 
 // Add member to household

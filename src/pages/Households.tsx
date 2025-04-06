@@ -27,6 +27,7 @@ const Households = () => {
       if (!user) return;
       
       try {
+        setIsLoading(true);
         const householdData = await getUserHouseholds();
         setHouseholds(householdData);
       } catch (error) {
