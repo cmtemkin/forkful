@@ -8,8 +8,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+type MealType = 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
+
 interface MealTypeSelectorProps {
-  value: string;
+  value: MealType | string;
   onChange: (value: string) => void;
 }
 

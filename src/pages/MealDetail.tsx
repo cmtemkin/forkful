@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Edit, Lock, Unlock, ThumbsUp, ThumbsDown, Trash, Plus, Calendar, Clock } from 'lucide-react';
@@ -21,7 +20,6 @@ import { format, parse } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 
-// Define the meal interface based on what's in localStorage
 interface Meal {
   id: string;
   title: string;
@@ -41,21 +39,18 @@ const MealDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // State for meal data
   const [meal, setMeal] = useState<Meal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  // Edit mode states
   const [editTitle, setEditTitle] = useState('');
   const [editMealType, setEditMealType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks'>('Breakfast');
   const [editDate, setEditDate] = useState<Date | undefined>(undefined);
   const [editIngredients, setEditIngredients] = useState('');
   const [editImage, setEditImage] = useState('');
   
-  // Load meal data from localStorage
   useEffect(() => {
     try {
       const storedMeals = localStorage.getItem('forkful_meals');
@@ -66,7 +61,6 @@ const MealDetail = () => {
         if (foundMeal) {
           setMeal(foundMeal);
           
-          // Initialize edit states
           setEditTitle(foundMeal.title);
           setEditMealType(foundMeal.mealType);
           setEditDate(foundMeal.day ? parseDayToDate(foundMeal.day) : undefined);
@@ -86,7 +80,6 @@ const MealDetail = () => {
     }
   }, [id]);
   
-  // Helper function to parse day string to Date
   const parseDayToDate = (day: string): Date => {
     const today = new Date();
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -103,7 +96,6 @@ const MealDetail = () => {
     return today;
   };
   
-  // Toggle meal locked status
   const toggleLock = () => {
     if (!meal) return;
     
@@ -136,7 +128,6 @@ const MealDetail = () => {
     }
   };
   
-  // Handle voting
   const handleVote = (isUpvote: boolean) => {
     if (!meal) return;
     
@@ -181,7 +172,6 @@ const MealDetail = () => {
     }
   };
   
-  // Handle saving edits
   const handleSaveEdits = () => {
     if (!meal) return;
     
@@ -190,7 +180,6 @@ const MealDetail = () => {
       if (storedMeals) {
         const meals = JSON.parse(storedMeals) as Meal[];
         
-        // Process ingredients - split by newlines and commas
         const processedIngredients = editIngredients
           .split(/[\n,]+/)
           .map(item => item.trim())
@@ -229,7 +218,6 @@ const MealDetail = () => {
     }
   };
   
-  // Handle delete
   const handleDelete = () => {
     if (!meal) return;
     
@@ -258,16 +246,13 @@ const MealDetail = () => {
     }
   };
   
-  // Add ingredients to grocery list
   const addToGroceryList = () => {
     if (!meal) return;
     
     try {
-      // Get existing grocery items
       const storedItems = localStorage.getItem('chowdown_groceries');
       const existingItems = storedItems ? JSON.parse(storedItems) : [];
       
-      // Create new grocery items from meal ingredients
       const newItems = meal.ingredients.map(ing => ({
         id: `grocery-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: ing,
@@ -275,10 +260,8 @@ const MealDetail = () => {
         recipe: meal.title
       }));
       
-      // Combine existing and new items
       const updatedItems = [...newItems, ...existingItems];
       
-      // Save to localStorage
       localStorage.setItem('chowdown_groceries', JSON.stringify(updatedItems));
       
       toast({
@@ -316,7 +299,6 @@ const MealDetail = () => {
   
   return (
     <div className="pb-20">
-      {/* Header */}
       <div className="bg-primary text-white px-4 py-3 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="mr-2">
           <ArrowLeft className="h-6 w-6" />
@@ -384,11 +366,9 @@ const MealDetail = () => {
         </div>
       </div>
       
-      {/* Main content */}
       <div className="p-4">
         {isEditing ? (
           <div className="space-y-6">
-            {/* Title edit */}
             <div>
               <label className="block text-sm font-medium mb-1">Meal name</label>
               <Input
@@ -399,7 +379,6 @@ const MealDetail = () => {
               />
             </div>
             
-            {/* Image edit */}
             <div>
               <label className="block text-sm font-medium mb-1">Recipe Image</label>
               <RecipeImagePreview
@@ -413,19 +392,20 @@ const MealDetail = () => {
               />
             </div>
             
-            {/* Meal type edit */}
             <MealTypeSelector 
               value={editMealType} 
-              onChange={setEditMealType} 
+              onChange={(value) => {
+                if (value === 'Breakfast' || value === 'Lunch' || value === 'Dinner' || value === 'Snacks') {
+                  setEditMealType(value);
+                }
+              }} 
             />
             
-            {/* Date edit */}
             <DateSelector 
               date={editDate} 
               onDateChange={setEditDate} 
             />
             
-            {/* Ingredients edit */}
             <div>
               <label className="block text-sm font-medium mb-1">Ingredients (separated by commas or new lines)</label>
               <Textarea
@@ -438,7 +418,6 @@ const MealDetail = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Image */}
             <div className="relative w-full rounded-xl overflow-hidden aspect-video bg-gray-100">
               {meal.image ? (
                 <img 
@@ -456,7 +435,6 @@ const MealDetail = () => {
               )}
             </div>
             
-            {/* Meal info card */}
             <Card>
               <CardContent className="p-4 space-y-4">
                 <div className="flex justify-between items-center">
@@ -498,7 +476,6 @@ const MealDetail = () => {
               </CardContent>
             </Card>
             
-            {/* Ingredients */}
             <div>
               <h2 className="text-lg font-bold mb-2">Ingredients</h2>
               {meal.ingredients.length > 0 ? (
@@ -514,7 +491,6 @@ const MealDetail = () => {
               )}
             </div>
             
-            {/* Add to grocery list button */}
             <Button 
               onClick={addToGroceryList}
               className="w-full bg-green-600 hover:bg-green-700 text-white"

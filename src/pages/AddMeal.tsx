@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -6,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import LoadingSpinner from '@/components/LoadingSpinner';
 import DateSelector from '@/components/meal/DateSelector';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
 import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
@@ -97,8 +95,8 @@ const AddMeal = () => {
   
   return (
     <div className="pb-20">
-      {/* Header - reduced padding */}
-      <div className="bg-primary text-white px-4 py-3 flex items-center">
+      {/* Header - with reduced padding */}
+      <div className="bg-primary text-white px-4 py-2 flex items-center">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
@@ -112,10 +110,10 @@ const AddMeal = () => {
           onDateChange={setDate} 
         />
         
-        {/* Meal type selection */}
+        {/* Meal type selection - FIX HERE: proper onChange handler */}
         <MealTypeSelector 
           value={mealType} 
-          onChange={setMealType} 
+          onChange={(value) => setMealType(value)} 
         />
         
         {/* Meal details */}
@@ -129,7 +127,7 @@ const AddMeal = () => {
           />
         </div>
         
-        {/* Image preview if available */}
+        {/* Image preview */}
         <div onClick={handleImageClick} className="cursor-pointer">
           <label className="block text-sm font-medium mb-1">Recipe Image (click to change)</label>
           <div className="w-full max-h-48 rounded-lg overflow-hidden">

@@ -33,8 +33,7 @@ const DateSelector = ({ date, onDateChange }: DateSelectorProps) => {
             selected={date}
             onSelect={(newDate) => {
               onDateChange(newDate);
-              // This is the fix - use document.body.click() to close the popover
-              // after selection
+              // Using document.body.click() to close the popover after selection
               document.body.click();
             }}
             initialFocus
