@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, ThumbsUp } from 'lucide-react';
+import { Lock, ThumbsUp, Utensils } from 'lucide-react';
 
 interface MealCardProps {
   id?: string;
@@ -49,7 +49,7 @@ const MealCard = ({ id, title, image, upvotes, isLocked }: MealCardProps) => {
             className="w-full h-full flex items-center justify-center"
             style={{ backgroundColor: generatePlaceholderColor(title) }}
           >
-            <span className="text-lg font-medium text-white">{title.charAt(0)}</span>
+            <Utensils className="h-6 w-6 text-white" />
           </div>
         )}
         
@@ -92,7 +92,7 @@ const MealCard = ({ id, title, image, upvotes, isLocked }: MealCardProps) => {
             className="w-full h-full flex items-center justify-center"
             style={{ backgroundColor: generatePlaceholderColor(title) }}
           >
-            <span className="text-lg font-medium text-white">{title.charAt(0)}</span>
+            <Utensils className="h-6 w-6 text-white" />
           </div>
         )}
         

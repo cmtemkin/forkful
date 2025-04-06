@@ -1,6 +1,7 @@
+
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Camera } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import LoadingSpinner from '@/components/LoadingSpinner';
 import DateSelector from '@/components/meal/DateSelector';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
-import RecipeUrlInput from '@/components/meal/RecipeUrlInput';
 import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
 import { format } from 'date-fns';
 
@@ -26,9 +26,7 @@ const AddMeal = () => {
   const [mealType, setMealType] = useState(defaultMealType || "Dinner");
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState("");
-  const [recipeUrl, setRecipeUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [isScraping, setIsScraping] = useState(false);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,17 +44,23 @@ const AddMeal = () => {
     const existingMeals = localStorage.getItem('forkful_meals');
     const meals = existingMeals ? JSON.parse(existingMeals) : [];
     
+    // Process ingredients - split by commas and newlines
+    const processedIngredients = ingredients
+      .split(/[\n,]+/)
+      .map(item => item.trim())
+      .filter(item => item !== '');
+    
     // Create a new meal object
     const newMeal = {
       id: `meal-${Date.now()}`, // Generate a unique ID using timestamp
       title: title.trim(),
       submittedBy: 'You', // In a real app, this would be the user's name
-      image: imageUrl || `https://source.unsplash.com/photo-${Math.floor(Math.random() * 100000)}`,
+      image: imageUrl || '',
       upvotes: 0,
       downvotes: 0,
       day: format(date || new Date(), 'EEEE').substring(0, 3) as any, // Convert to 'Mon', 'Tue', etc.
       mealType: mealType,
-      ingredients: ingredients.split('\n').filter(item => item.trim()),
+      ingredients: processedIngredients,
       dateAdded: new Date().toISOString()
     };
     
@@ -67,7 +71,7 @@ const AddMeal = () => {
     localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
     
     // Log for debugging
-    console.log({ date, mealType, title, ingredients, recipeUrl, imageUrl });
+    console.log({ date, mealType, title, ingredients, imageUrl });
     
     // Show success toast and navigate back
     toast({
@@ -75,13 +79,6 @@ const AddMeal = () => {
       description: "Meal idea added to calendar",
     });
     navigate('/');
-  };
-  
-  const handleScrapedData = (data: { title?: string; ingredients?: string; imageUrl?: string }) => {
-    // Only update fields if they're not already filled in
-    if (data.title && !title) setTitle(data.title);
-    if (data.ingredients && !ingredients) setIngredients(data.ingredients);
-    if (data.imageUrl) setImageUrl(data.imageUrl);
   };
 
   const handleImageClick = () => {
@@ -101,7 +98,7 @@ const AddMeal = () => {
   return (
     <div className="pb-20">
       {/* Header */}
-      <div className="bg-primary-coral text-white px-4 py-6 flex items-center">
+      <div className="bg-primary text-white px-4 py-6 flex items-center">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
@@ -121,12 +118,6 @@ const AddMeal = () => {
           onChange={setMealType} 
         />
         
-        {/* Recipe URL for scraping */}
-        <RecipeUrlInput 
-          disabled={isScraping}
-          onScrapedData={handleScrapedData}
-        />
-        
         {/* Meal details */}
         <div>
           <label className="block text-sm font-medium mb-1">Meal name</label>
@@ -135,7 +126,6 @@ const AddMeal = () => {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Chicken Alfredo"
             required
-            disabled={isScraping}
           />
         </div>
         
@@ -159,23 +149,21 @@ const AddMeal = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Ingredients (one per line)</label>
+          <label className="block text-sm font-medium mb-1">Ingredients (separated by commas or new lines)</label>
           <Textarea
             value={ingredients}
             onChange={(e) => setIngredients(e.target.value)}
-            placeholder="List ingredients, one per line"
+            placeholder="List ingredients, separated by commas or new lines"
             className="min-h-[100px]"
-            disabled={isScraping}
           />
-          <p className="text-xs text-slate-accent mt-1">Press Enter for a new ingredient</p>
+          <p className="text-xs text-slate-accent mt-1">Press Enter or use commas for multiple ingredients</p>
         </div>
         
         <Button 
           type="submit" 
-          className="w-full bg-primary-coral hover:bg-primary-coral/90 text-white py-6 rounded-full"
-          disabled={isScraping}
+          className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full"
         >
-          {isScraping ? <LoadingSpinner /> : "Add Idea"}
+          Add Idea
         </Button>
       </form>
     </div>

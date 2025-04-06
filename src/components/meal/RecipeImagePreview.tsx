@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { ImageIcon, Camera } from 'lucide-react';
+import { ImageIcon, Utensils } from 'lucide-react';
 
 interface RecipeImagePreviewProps {
   imageUrl: string;
@@ -61,7 +61,7 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
           className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
           style={{ backgroundColor: generatePlaceholderColor(title || 'Recipe') }}
         >
-          <Camera className="h-10 w-10 text-gray-500 mb-2" />
+          <Utensils className="h-10 w-10 text-gray-500 mb-2" />
           <span className="text-sm font-medium text-gray-700 break-words">
             Click to add image
           </span>

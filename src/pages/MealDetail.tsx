@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2, ShoppingCart, Edit, Calendar } from 'lucide-react';
+import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2, ShoppingCart, Edit, Calendar, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
@@ -16,13 +17,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { ImageIcon } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 const MealDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +38,10 @@ const MealDetail = () => {
   const [localUpvotes, setLocalUpvotes] = useState(0);
   const [localDownvotes, setLocalDownvotes] = useState(0);
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [editMode, setEditMode] = useState(false);
+  const [editIngredients, setEditIngredients] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editMealType, setEditMealType] = useState('');
   
   useEffect(() => {
     // Get meal from localStorage - check forkful_meals first, then fall back to chowdown_meals
@@ -49,14 +55,32 @@ const MealDetail = () => {
         setIsLocked(foundMeal.isLocked || false);
         setLocalUpvotes(foundMeal.upvotes);
         setLocalDownvotes(foundMeal.downvotes);
+        setEditTitle(foundMeal.title || '');
+        setEditMealType(foundMeal.mealType || 'Dinner');
+        
+        // Set ingredients for editing (join array to string)
+        if (foundMeal.ingredients && Array.isArray(foundMeal.ingredients)) {
+          setEditIngredients(foundMeal.ingredients.join('\n'));
+        }
         
         // Calculate date from day of week
         if (foundMeal.day) {
           const today = new Date();
           const dayMap: {[key: string]: number} = {
-            'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 0
+            'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 0,
+            'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0
           };
-          const mealDay = dayMap[foundMeal.day];
+          let dayName = foundMeal.day;
+          if (dayName.length <= 3) {
+            // Convert short day names to full names for display purposes
+            const shortToDayMap: {[key: string]: string} = {
+              'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday', 
+              'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday'
+            };
+            dayName = shortToDayMap[dayName] || dayName;
+          }
+          
+          const mealDay = dayMap[dayName];
           if (mealDay !== undefined) {
             let daysToAdd = mealDay - today.getDay();
             if (daysToAdd <= 0) daysToAdd += 7; // If it's in the past, go to next week
@@ -70,6 +94,43 @@ const MealDetail = () => {
     setIsLoading(false);
   }, [id]);
   
+  const saveChanges = () => {
+    if (!meal) return;
+    
+    // Process ingredients - split by commas and newlines
+    const processedIngredients = editIngredients
+      .split(/[\n,]+/)
+      .map(item => item.trim())
+      .filter(item => item !== '');
+      
+    // Update meal in local state
+    const updatedMeal = {
+      ...meal,
+      title: editTitle,
+      mealType: editMealType,
+      ingredients: processedIngredients,
+    };
+    
+    setMeal(updatedMeal);
+    
+    // Update in localStorage
+    const storedMeals = localStorage.getItem('forkful_meals') || localStorage.getItem('chowdown_meals');
+    if (storedMeals) {
+      const allMeals = JSON.parse(storedMeals);
+      const updatedMeals = allMeals.map((m: any) => 
+        m.id === id ? updatedMeal : m
+      );
+      localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+    }
+    
+    setEditMode(false);
+    
+    toast({
+      title: "Changes saved",
+      description: "Your meal has been updated successfully."
+    });
+  };
+  
   const toggleLock = () => {
     setIsLocked(!isLocked);
     
@@ -81,6 +142,11 @@ const MealDetail = () => {
         m.id === id ? { ...m, isLocked: !isLocked } : m
       );
       localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+      
+      // If locking, add ingredients to grocery list
+      if (!isLocked && meal.ingredients && meal.ingredients.length > 0) {
+        handleAddToGroceries();
+      }
     }
   };
   
@@ -186,7 +252,7 @@ const MealDetail = () => {
   };
   
   const handleEditMeal = () => {
-    navigate(`/edit-meal/${id}`);
+    setEditMode(true);
   };
   
   const generatePlaceholderColor = (title: string) => {
@@ -329,9 +395,15 @@ const MealDetail = () => {
           <ArrowLeft className="h-6 w-6" />
         </button>
         <div className="flex-1"></div>
-        <button onClick={handleEditMeal} className="ml-4">
-          <Edit className="h-6 w-6 text-chow-primary" />
-        </button>
+        {editMode ? (
+          <button onClick={saveChanges} className="ml-4 text-primary-coral">
+            Save
+          </button>
+        ) : (
+          <button onClick={handleEditMeal} className="ml-4">
+            <Edit className="h-6 w-6 text-primary-coral" />
+          </button>
+        )}
       </div>
       
       <div className="relative pt-12">
@@ -348,7 +420,7 @@ const MealDetail = () => {
               className="w-full h-full flex flex-col items-center justify-center p-4"
               style={{ backgroundColor: generatePlaceholderColor(meal.title) }}
             >
-              <ImageIcon className="h-16 w-16 text-white/70 mb-2" />
+              <Utensils className="h-16 w-16 text-white/70 mb-2" />
               <span className="text-lg font-medium text-white text-center">{meal.title}</span>
             </div>
           )}
@@ -356,135 +428,179 @@ const MealDetail = () => {
       </div>
       
       <div className="px-4 py-6">
-        <h1 className="text-3xl font-bold mb-2">{meal.title}</h1>
-        <div className="flex items-center text-gray-600 mb-2">
-          <span>{meal.day} {meal.mealType}</span>
-          <span className="mx-2">•</span>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="flex items-center text-sm text-chow-primary">
-                <span>{getDisplayDate()}</span>
-                <Calendar className="h-4 w-4 ml-1" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={date}
-                onSelect={handleDateChange}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="text-sm text-gray-500 mb-6">
-          {meal.submittedBy ? `Added by ${meal.submittedBy}` : ""}
-        </div>
+        {editMode ? (
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Title</label>
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              className="mb-3"
+            />
+            
+            <label className="block text-sm font-medium mb-1">Meal Type</label>
+            <select
+              value={editMealType}
+              onChange={(e) => setEditMealType(e.target.value)}
+              className="w-full p-2 border rounded-md mb-3"
+            >
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Snack">Snack</option>
+            </select>
+          </div>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold mb-2">{meal.title}</h1>
+            <div className="flex items-center text-gray-600 mb-2">
+              <span>{meal.day} {meal.mealType}</span>
+              <span className="mx-2">•</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center text-sm text-primary-coral">
+                    <span>{getDisplayDate()}</span>
+                    <Calendar className="h-4 w-4 ml-1" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => {
+                      handleDateChange(newDate);
+                      // Close popover after selection
+                      document.body.click();
+                    }}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="text-sm text-gray-500 mb-6">
+              {meal.submittedBy ? `Added by ${meal.submittedBy}` : ""}
+            </div>
+          </>
+        )}
         
         <h2 className="text-xl font-semibold mb-2">Ingredients</h2>
-        <ul className="mb-8">
-          {meal.ingredients && meal.ingredients.length > 0 ? (
-            meal.ingredients.map((ingredient: string, i: number) => (
-              <li key={i} className="flex items-start mb-1">
-                <span className="mr-2">•</span>
-                <span>{ingredient}</span>
-              </li>
-            ))
-          ) : (
-            <li className="text-gray-500">No ingredients listed</li>
-          )}
-        </ul>
-        
-        <div className="flex gap-4 mb-8">
-          <Button 
-            variant="outline" 
-            className={`flex-1 upvote border-chow-upvote/20 ${userVote === 'up' ? 'bg-chow-upvote/30' : ''}`}
-            disabled={isLocked}
-            onClick={handleUpvote}
-          >
-            <ThumbsUp className="mr-2 h-5 w-5" />
-            <span>{localUpvotes}</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className={`flex-1 downvote border-chow-downvote/20 ${userVote === 'down' ? 'bg-chow-downvote/30' : ''}`}
-            disabled={isLocked}
-            onClick={handleDownvote}
-          >
-            <ThumbsDown className="mr-2 h-5 w-5" />
-            <span>{localDownvotes}</span>
-          </Button>
-        </div>
-        
-        <div className="flex flex-col gap-4">
-          <Button
-            variant="outline"
-            className="border-gray-300 hover:bg-gray-100"
-            onClick={toggleLock}
-          >
-            {isLocked ? (
-              <>
-                <Unlock className="mr-2 h-5 w-5" />
-                <span>Unlock This Meal</span>
-              </>
+        {editMode ? (
+          <Textarea
+            value={editIngredients}
+            onChange={(e) => setEditIngredients(e.target.value)}
+            placeholder="Enter ingredients, separated by commas or new lines"
+            className="mb-6"
+            rows={5}
+          />
+        ) : (
+          <ul className="mb-8">
+            {meal.ingredients && meal.ingredients.length > 0 ? (
+              meal.ingredients.map((ingredient: string, i: number) => (
+                <li key={i} className="flex items-start mb-1">
+                  <span className="mr-2">•</span>
+                  <span>{ingredient}</span>
+                </li>
+              ))
             ) : (
-              <>
-                <Lock className="mr-2 h-5 w-5" />
-                <span>Lock This Meal</span>
-              </>
+              <li className="text-gray-500">No ingredients listed</li>
             )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            className="border-chow-secondary/40 hover:bg-chow-secondary/10 text-chow-secondary"
-            onClick={handleAddToGroceries}
-          >
-            <ShoppingCart className="mr-2 h-5 w-5" />
-            <span>Add to Grocery List</span>
-          </Button>
-          
-          {meal.sourceUrl && (
+          </ul>
+        )}
+        
+        {!editMode && (
+          <div className="flex gap-4 mb-8">
+            <Button 
+              variant="outline" 
+              className={`flex-1 upvote border-pistachio-green/20 ${userVote === 'up' ? 'bg-pistachio-green/30' : ''}`}
+              disabled={isLocked}
+              onClick={handleUpvote}
+            >
+              <ThumbsUp className="mr-2 h-5 w-5" />
+              <span>{localUpvotes}</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className={`flex-1 downvote border-primary-coral/20 ${userVote === 'down' ? 'bg-primary-coral/30' : ''}`}
+              disabled={isLocked}
+              onClick={handleDownvote}
+            >
+              <ThumbsDown className="mr-2 h-5 w-5" />
+              <span>{localDownvotes}</span>
+            </Button>
+          </div>
+        )}
+        
+        {!editMode && (
+          <div className="flex flex-col gap-4">
             <Button
               variant="outline"
               className="border-gray-300 hover:bg-gray-100"
-              onClick={() => window.open(meal.sourceUrl, '_blank')}
+              onClick={toggleLock}
             >
-              <ExternalLink className="mr-2 h-5 w-5" />
-              <span>View Original Recipe</span>
+              {isLocked ? (
+                <>
+                  <Unlock className="mr-2 h-5 w-5" />
+                  <span>Unlock This Meal</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="mr-2 h-5 w-5" />
+                  <span>Lock This Meal</span>
+                </>
+              )}
             </Button>
-          )}
-          
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+            
+            <Button
+              variant="outline"
+              className="border-secondary/40 hover:bg-secondary/10 text-secondary"
+              onClick={handleAddToGroceries}
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              <span>Add to Grocery List</span>
+            </Button>
+            
+            {meal.sourceUrl && (
               <Button
                 variant="outline"
-                className="border-chow-downvote/20 hover:bg-chow-downvote/10 text-chow-downvote"
+                className="border-gray-300 hover:bg-gray-100"
+                onClick={() => window.open(meal.sourceUrl, '_blank')}
               >
-                <Trash2 className="mr-2 h-5 w-5" />
-                <span>Delete This Meal</span>
+                <ExternalLink className="mr-2 h-5 w-5" />
+                <span>View Original Recipe</span>
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete the meal
-                  from your calendar.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteMeal}
-                  className="bg-chow-downvote text-white hover:bg-chow-downvote/90"
+            )}
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border-primary-coral/20 hover:bg-primary-coral/10 text-primary-coral"
                 >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+                  <Trash2 className="mr-2 h-5 w-5" />
+                  <span>Delete This Meal</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the meal
+                    from your calendar.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteMeal}
+                    className="bg-primary-coral text-white hover:bg-primary-coral/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
       </div>
     </div>
   );

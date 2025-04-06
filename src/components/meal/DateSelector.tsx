@@ -31,7 +31,11 @@ const DateSelector = ({ date, onDateChange }: DateSelectorProps) => {
           <Calendar
             mode="single"
             selected={date}
-            onSelect={onDateChange}
+            onSelect={(newDate) => {
+              onDateChange(newDate);
+              // Close the popover after selection by clicking the document body
+              document.body.click();
+            }}
             initialFocus
             className="p-3 pointer-events-auto"
           />
