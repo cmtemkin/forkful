@@ -44,10 +44,14 @@ const WeeklyView = () => {
               }`}
               onClick={() => handleDaySelect(day)}
             >
-              <span className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-500'}`}>
+              <span className={isSelected ? 'text-xs font-medium text-white' : 'text-xs font-medium text-gray-500'}>
                 {dayName}
               </span>
-              <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-gray-800'}`}>
+              <span className={isSelected 
+                ? 'text-lg font-bold text-white' 
+                : isCurrentDay 
+                  ? 'text-lg font-bold text-gray-800' 
+                  : 'text-lg font-bold text-gray-800'}>
                 {dayNumber}
               </span>
               {hasMeals && !isSelected && (

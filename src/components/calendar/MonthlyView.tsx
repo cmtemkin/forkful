@@ -96,13 +96,11 @@ const MonthlyView = () => {
                     }`}
                     onClick={() => handleDateClick(day)}
                   >
-                    <span className={`text-sm ${
-                      isSelected 
-                        ? 'font-bold text-white' 
-                        : isCurrentDay 
-                          ? 'font-bold text-chow-primary' 
-                          : 'text-gray-800'
-                    }`}>
+                    <span className={isSelected 
+                      ? 'text-sm font-bold text-white' 
+                      : isCurrentDay 
+                        ? 'text-sm font-bold text-chow-primary' 
+                        : 'text-sm text-gray-800'}>
                       {format(day, 'd')}
                     </span>
                     {hasMeals && !isSelected && (
