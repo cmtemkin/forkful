@@ -42,7 +42,7 @@ export const getHouseholdMembers = async (householdId: string): Promise<Househol
   return members;
 };
 
-// Add a member to a household (renamed from inviteMember to addHouseholdMember)
+// Add a member to a household
 export const addHouseholdMember = async (householdId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<void> => {
   // First, find the user by email
   const { data: userData, error: userError } = await supabase
@@ -88,7 +88,7 @@ export const addHouseholdMember = async (householdId: string, email: string, rol
   }
 };
 
-// Remove a member from a household (renamed to removeHouseholdMember)
+// Remove a member from a household
 export const removeHouseholdMember = async (householdId: string, userId: string): Promise<void> => {
   const { error } = await supabase
     .from('household_members')
