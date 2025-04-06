@@ -39,9 +39,24 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && onImageSelected) {
-      onImageSelected(file);
+      // Create a new FileReader to read the file
+      const reader = new FileReader();
+      
+      // Set up the onload handler
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          // Pass the file to the parent component
+          onImageSelected(file);
+        }
+      };
+      
+      // Read the file as a data URL
+      reader.readAsDataURL(file);
     }
   };
+  
+  // Use placeholder images if we hit an error or no image is provided
+  const usePlaceholder = !imageUrl || hasError;
   
   return (
     <div 
@@ -56,7 +71,7 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
         onChange={handleFileChange}
       />
       
-      {!imageUrl || hasError ? (
+      {usePlaceholder ? (
         <div 
           className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
           style={{ backgroundColor: generatePlaceholderColor(title || 'Recipe') }}
@@ -72,6 +87,7 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
           alt={title || "Recipe"} 
           className="w-full h-full object-cover"
           onError={handleError}
+          crossOrigin="anonymous"
         />
       )}
     </div>

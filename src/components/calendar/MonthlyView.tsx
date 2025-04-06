@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { format, getDaysInMonth, startOfMonth, isSameDay, isToday, addDays } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, isSameDay, isToday, addDays, addMonths, subMonths } from 'date-fns';
 import { useCalendar } from '@/contexts/CalendarContext';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const MonthlyView = () => {
   const { currentDate, setCurrentDate, setCurrentView, getMealsForDay } = useCalendar();
@@ -36,12 +37,28 @@ const MonthlyView = () => {
     setCurrentView('daily');
   };
   
+  const goToPreviousMonth = () => {
+    setCurrentDate(subMonths(currentDate, 1));
+  };
+  
+  const goToNextMonth = () => {
+    setCurrentDate(addMonths(currentDate, 1));
+  };
+  
   return (
     <div className="flex flex-col w-full">
       <div className="bg-white px-4 py-6 border-b">
-        <h1 className="text-2xl font-bold text-center">
-          {format(currentDate, 'MMMM yyyy')}
-        </h1>
+        <div className="flex items-center justify-between">
+          <button onClick={goToPreviousMonth} className="p-2 rounded-full hover:bg-gray-100">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-center">
+            {format(currentDate, 'MMMM yyyy')}
+          </h1>
+          <button onClick={goToNextMonth} className="p-2 rounded-full hover:bg-gray-100">
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       
       <div className="p-4">

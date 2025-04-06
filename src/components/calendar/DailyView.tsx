@@ -1,19 +1,35 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { ChevronRight, Plus } from 'lucide-react';
+import { format, addDays, subDays } from 'date-fns';
+import { ChevronRight, ChevronLeft, Plus } from 'lucide-react';
 import { useCalendar } from '@/contexts/CalendarContext';
 import { Link } from 'react-router-dom';
 
 const DailyView = () => {
-  const { currentDate, mealTypes, getMealsByType } = useCalendar();
+  const { currentDate, setCurrentDate, mealTypes, getMealsByType } = useCalendar();
   
   const formattedDate = format(currentDate, 'MMMM d');
+  
+  const goToPreviousDay = () => {
+    setCurrentDate(subDays(currentDate, 1));
+  };
+  
+  const goToNextDay = () => {
+    setCurrentDate(addDays(currentDate, 1));
+  };
   
   return (
     <div className="flex flex-col w-full pb-20">
       <div className="bg-white px-4 py-6 border-b">
-        <h1 className="text-2xl font-bold text-center">{formattedDate}</h1>
+        <div className="flex items-center justify-between">
+          <button onClick={goToPreviousDay} className="p-2 rounded-full hover:bg-gray-100">
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-center">{formattedDate}</h1>
+          <button onClick={goToNextDay} className="p-2 rounded-full hover:bg-gray-100">
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
       </div>
       
       <div className="p-4 space-y-6">
