@@ -16,25 +16,21 @@ export interface HouseholdMember {
   user_id: string;
   role: string;
   joined_at: string;
-  profile?: {
-    display_name: string;
-    avatar_url?: string;
-  };
+  profile?: UserProfile;
 }
 
-// Interface for member without profile
+export interface UserProfile {
+  display_name: string;
+  avatar_url?: string;
+}
+
+// Raw data interfaces (for internal use)
 interface RawHouseholdMember {
   id: string;
   household_id: string;
   user_id: string;
   role: string;
   joined_at: string;
-}
-
-// Interface for profile data
-interface ProfileData {
-  display_name: string;
-  avatar_url?: string;
 }
 
 // Get all households the current user belongs to
@@ -79,13 +75,13 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   }
   
   // For each household, fetch the members
-  const householdsWithMembers: Household[] = await Promise.all(
+  const householdsWithMembers = await Promise.all(
     households.map(async (household) => {
       const members = await getHouseholdMembers(household.id);
       return {
         ...household,
         members
-      };
+      } as Household;
     })
   );
 
@@ -112,7 +108,7 @@ async function getHouseholdMembers(householdId: string): Promise<HouseholdMember
   }
   
   // For each member, get their profile separately
-  const membersWithProfiles = await Promise.all(
+  const membersWithProfiles: HouseholdMember[] = await Promise.all(
     rawMembers.map(async (member: RawHouseholdMember) => {
       try {
         const { data: profileData, error: profileError } = await supabase
@@ -122,32 +118,36 @@ async function getHouseholdMembers(householdId: string): Promise<HouseholdMember
           .single();
         
         if (profileError || !profileData) {
-          return createMemberWithDefaultProfile(member);
+          return {
+            ...member,
+            profile: {
+              display_name: 'Unknown User',
+              avatar_url: undefined
+            }
+          };
         }
         
         return {
           ...member,
-          profile: profileData as ProfileData
+          profile: {
+            display_name: profileData.display_name,
+            avatar_url: profileData.avatar_url
+          }
         };
       } catch (error) {
         console.warn(`Could not fetch profile for user ${member.user_id}`, error);
-        return createMemberWithDefaultProfile(member);
+        return {
+          ...member,
+          profile: {
+            display_name: 'Unknown User',
+            avatar_url: undefined
+          }
+        };
       }
     })
   );
   
   return membersWithProfiles;
-}
-
-// Helper function to create a member with default profile
-function createMemberWithDefaultProfile(member: RawHouseholdMember): HouseholdMember {
-  return {
-    ...member,
-    profile: {
-      display_name: 'Unknown User',
-      avatar_url: undefined
-    }
-  };
 }
 
 // Create a new household
