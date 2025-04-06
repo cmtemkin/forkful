@@ -10,14 +10,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
-import { Tables } from '@/integrations/supabase/types';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters" }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-type Profile = Tables<'profiles'>;
+
+// Define a profile type that matches the database structure
+interface Profile {
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const Profile = () => {
   const { user } = useAuth();
@@ -47,7 +54,7 @@ const Profile = () => {
           throw error;
         }
 
-        setProfile(data);
+        setProfile(data as Profile);
         form.reset({
           displayName: data?.display_name || "",
         });
@@ -80,6 +87,14 @@ const Profile = () => {
 
       if (error) {
         throw error;
+      }
+
+      // Update the local profile state
+      if (profile) {
+        setProfile({
+          ...profile,
+          display_name: values.displayName
+        });
       }
 
       toast({
