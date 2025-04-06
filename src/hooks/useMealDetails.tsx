@@ -47,7 +47,8 @@ export function useMealDetails(id: string | undefined) {
           setEditTitle(foundMeal.title);
           setEditMealType(foundMeal.mealType);
           setEditDate(foundMeal.day ? parseDayToDate(foundMeal.day) : undefined);
-          setEditIngredients(foundMeal.ingredients.join('\n'));
+          // Ensure ingredients array exists before joining
+          setEditIngredients(foundMeal.ingredients ? foundMeal.ingredients.join('\n') : '');
           setEditImage(foundMeal.image || '');
         } else {
           setError('Meal not found');

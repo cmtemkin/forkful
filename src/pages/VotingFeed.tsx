@@ -16,7 +16,8 @@ const mockMeals = [
     upvotes: 5,
     downvotes: 2,
     day: 'Monday',
-    mealType: 'Dinner'
+    mealType: 'Dinner',
+    ingredients: ['Chicken', 'Fettuccine', 'Heavy Cream', 'Parmesan Cheese']
   },
   {
     id: '2',
@@ -26,7 +27,8 @@ const mockMeals = [
     upvotes: 3,
     downvotes: 1,
     day: 'Monday',
-    mealType: 'Dinner'
+    mealType: 'Dinner',
+    ingredients: ['Ground Beef', 'BBQ Sauce', 'Breadcrumbs', 'Onion']
   },
   {
     id: '3',
@@ -36,14 +38,33 @@ const mockMeals = [
     upvotes: 2,
     downvotes: 4,
     day: 'Monday',
-    mealType: 'Dinner'
+    mealType: 'Dinner',
+    ingredients: ['Broccoli', 'Carrots', 'Bell Peppers', 'Soy Sauce', 'Rice']
   }
 ];
 
 // Get the stored meals from localStorage or use the mock data
 const getInitialMeals = () => {
-  const storedMeals = localStorage.getItem('forkful_meals');
-  return storedMeals ? JSON.parse(storedMeals) : mockMeals;
+  try {
+    const storedMeals = localStorage.getItem('forkful_meals');
+    const meals = storedMeals ? JSON.parse(storedMeals) : mockMeals;
+    
+    // Ensure all meals have the required properties
+    return meals.map(meal => ({
+      id: meal.id || `meal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      title: meal.title || 'Untitled Meal',
+      submittedBy: meal.submittedBy || 'Anonymous',
+      image: meal.image || '',
+      upvotes: typeof meal.upvotes === 'number' ? meal.upvotes : 0,
+      downvotes: typeof meal.downvotes === 'number' ? meal.downvotes : 0,
+      day: meal.day || 'Monday',
+      mealType: meal.mealType || 'Dinner',
+      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
+    }));
+  } catch (error) {
+    console.error('Error parsing meals from localStorage:', error);
+    return mockMeals;
+  }
 };
 
 // Function to get meal type icon
@@ -74,8 +95,18 @@ const VotingFeed = () => {
     // Migrate old data if it exists
     const oldStoredMeals = localStorage.getItem('chowdown_meals');
     if (oldStoredMeals && !localStorage.getItem('forkful_meals')) {
-      localStorage.setItem('forkful_meals', oldStoredMeals);
-      setMeals(JSON.parse(oldStoredMeals));
+      try {
+        const parsedMeals = JSON.parse(oldStoredMeals);
+        // Ensure all required properties are present
+        const migratedMeals = parsedMeals.map(meal => ({
+          ...meal,
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : []
+        }));
+        localStorage.setItem('forkful_meals', JSON.stringify(migratedMeals));
+        setMeals(migratedMeals);
+      } catch (error) {
+        console.error('Error migrating old meals data:', error);
+      }
     }
   }, []);
 
