@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { format, isToday, isSameDay } from 'date-fns';
-import { ChevronRight, Utensils } from 'lucide-react';
-import { useCalendar, MealType } from '@/contexts/CalendarContext';
+import { useCalendar } from '@/contexts/CalendarContext';
 import MealCard from './MealCard';
 import { Link } from 'react-router-dom';
 
@@ -44,14 +42,12 @@ const WeeklyView = () => {
               }`}
               onClick={() => handleDaySelect(day)}
             >
-              <span className={isSelected ? 'text-xs font-medium text-white' : 'text-xs font-medium text-gray-500'}>
+              <span className={isSelected ? 'text-xs font-medium text-white' : 'text-xs font-medium text-black'}>
                 {dayName}
               </span>
               <span className={isSelected 
                 ? 'text-lg font-bold text-white' 
-                : isCurrentDay 
-                  ? 'text-lg font-bold text-gray-800' 
-                  : 'text-lg font-bold text-gray-800'}>
+                : 'text-lg font-bold text-black'}>
                 {dayNumber}
               </span>
               {hasMeals && !isSelected && (
