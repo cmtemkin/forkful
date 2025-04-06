@@ -97,8 +97,8 @@ const AddMeal = () => {
   
   return (
     <div className="pb-20">
-      {/* Header */}
-      <div className="bg-primary text-white px-4 py-6 flex items-center">
+      {/* Header - reduced padding */}
+      <div className="bg-primary text-white px-4 py-3 flex items-center">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
