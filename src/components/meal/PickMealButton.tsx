@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Utensils, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,7 +39,6 @@ const PickMealButton = ({
   className 
 }: PickMealButtonProps) => {
   const [showMessage, setShowMessage] = useState(false);
-  const [message, setMessage] = useState('');
   const { toast } = useToast();
 
   const handleToggle = () => {
@@ -48,19 +48,12 @@ const PickMealButton = ({
     
     if (!isPicked) { // About to become picked (state hasn't updated yet)
       const msg = getRandomMessage();
-      setMessage(msg);
-      setShowMessage(true);
       
       toast({
         title: "Meal picked!",
         description: msg,
         duration: 2000,
       });
-      
-      // Hide the message after animation
-      setTimeout(() => {
-        setShowMessage(false);
-      }, 2000);
     }
   };
 
@@ -90,25 +83,9 @@ const PickMealButton = ({
           <Utensils className="h-6 w-6" />
         )}
       </motion.button>
-      
-      <AnimatePresence>
-        {showMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 whitespace-nowrap 
-                       bg-white text-charcoal-gray px-3 py-1 rounded-full shadow-md 
-                       text-sm font-medium 
-                       max-w-[90vw] overflow-hidden text-ellipsis 
-                       z-50"
-          >
-            {message}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
 
 export default PickMealButton;
+
