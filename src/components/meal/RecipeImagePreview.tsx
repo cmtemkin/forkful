@@ -58,9 +58,10 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
   // Use placeholder images if we hit an error or no image is provided
   const usePlaceholder = !imageUrl || hasError;
   
+  // Smaller image placeholder for more compact layout
   return (
     <div 
-      className="w-full aspect-video max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden cursor-pointer"
+      className="w-full h-12 mx-auto bg-gray-100 rounded-md overflow-hidden cursor-pointer flex items-center"
       onClick={handleClick}
     >
       <input 
@@ -73,22 +74,29 @@ const RecipeImagePreview = ({ imageUrl, title, onError, onImageSelected }: Recip
       
       {usePlaceholder ? (
         <div 
-          className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
-          style={{ backgroundColor: generatePlaceholderColor(title || 'Recipe') }}
+          className="w-full h-full flex items-center px-3"
+          style={{ backgroundColor: usePlaceholder ? generatePlaceholderColor(title || 'Recipe') : undefined }}
         >
-          <Utensils className="h-10 w-10 text-gray-500 mb-2" />
-          <span className="text-sm font-medium text-gray-700 break-words">
-            Click to add image
+          <ImageIcon className="h-5 w-5 text-gray-500 mr-2" />
+          <span className="text-sm font-medium text-gray-700">
+            Click to add an image
           </span>
         </div>
       ) : (
-        <img 
-          src={imageUrl} 
-          alt={title || "Recipe"} 
-          className="w-full h-full object-cover"
-          onError={handleError}
-          crossOrigin="anonymous"
-        />
+        <div className="flex w-full h-full">
+          <img 
+            src={imageUrl} 
+            alt={title || "Recipe"} 
+            className="h-full w-12 object-cover"
+            onError={handleError}
+            crossOrigin="anonymous"
+          />
+          <div className="flex items-center px-3">
+            <span className="text-sm font-medium text-gray-700">
+              Click to change image
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

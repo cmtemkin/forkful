@@ -25,7 +25,6 @@ const MealCard = ({
   upvotes,
   downvotes,
   isLocked = false,
-  dayMealtime,
   dayBadge,
   mealTypeBadge
 }: MealCardProps) => {
@@ -34,6 +33,8 @@ const MealCard = ({
   const [localDownvotes, setLocalDownvotes] = useState(downvotes);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const { toast } = useToast();
+  
+  const hasImage = image && !imageError;
   
   const generatePlaceholderColor = (title: string) => {
     // Generate a deterministic color based on the title
@@ -115,25 +116,64 @@ const MealCard = ({
     }
   };
   
+  // Compact card without image
+  if (!hasImage) {
+    return (
+      <Link to={`/meal/${id}`} className="block">
+        <div className="meal-card bg-white rounded-xl shadow-sm border border-gray-200 p-3">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-lg font-semibold">{title}</h3>
+              <p className="text-sm text-gray-500">{submittedBy}</p>
+              
+              {/* Day and meal type badges */}
+              <div className="flex mt-1 flex-wrap">
+                {dayBadge}
+                {mealTypeBadge}
+              </div>
+            </div>
+            {isLocked && (
+              <Lock className="h-5 w-5 text-gray-400" />
+            )}
+          </div>
+          <div className="flex gap-3 mt-2">
+            <div className="flex items-center">
+              <button 
+                className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-forkful-upvote/30' : ''}`}
+                disabled={isLocked}
+                onClick={handleUpvote}
+              >
+                <ThumbsUp className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-medium">{localUpvotes}</span>
+            </div>
+            <div className="flex items-center">
+              <button 
+                className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-forkful-downvote/30' : ''}`}
+                disabled={isLocked}
+                onClick={handleDownvote}
+              >
+                <ThumbsDown className="h-4 w-4" />
+              </button>
+              <span className="text-sm font-medium">{localDownvotes}</span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+  
+  // Card with image
   return (
     <Link to={`/meal/${id}`} className="block">
       <div className="meal-card">
         <div className="w-20 h-20 rounded-lg overflow-hidden">
-          {image && !imageError ? (
-            <img 
-              src={image} 
-              alt={title}
-              className="w-full h-full object-cover"
-              onError={() => setImageError(true)}
-            />
-          ) : (
-            <div 
-              className="w-full h-full flex items-center justify-center"
-              style={{ backgroundColor: generatePlaceholderColor(title) }}
-            >
-              <ImageIcon className="h-6 w-6 text-white/70" />
-            </div>
-          )}
+          <img 
+            src={image} 
+            alt={title}
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+          />
         </div>
         
         <div className="flex-1">

@@ -22,8 +22,8 @@ const WeeklyView = () => {
 
   return (
     <div className="flex flex-col w-full">
-      {/* Day selector */}
-      <div className="flex overflow-x-auto py-2 px-1 bg-white sticky top-0 z-10 border-b">
+      {/* Day selector - optimized for mobile */}
+      <div className="grid grid-cols-7 gap-1 py-2 bg-white sticky top-0 z-10 border-b">
         {weekDays.map((day) => {
           const dayNumber = format(day, 'd');
           const dayName = format(day, 'EEE');
@@ -34,11 +34,11 @@ const WeeklyView = () => {
           return (
             <button
               key={day.toString()}
-              className={`flex flex-col items-center min-w-[3.5rem] mx-1 rounded-full py-2 px-3 ${
+              className={`flex flex-col items-center py-2 ${
                 isSelected 
-                  ? 'bg-primary-coral text-white' 
+                  ? 'bg-primary-coral text-white rounded-full mx-1' 
                   : isCurrentDay 
-                    ? 'bg-gray-100' 
+                    ? 'bg-gray-100 rounded-full mx-1' 
                     : 'bg-white'
               }`}
               onClick={() => handleDaySelect(day)}
