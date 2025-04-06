@@ -113,6 +113,7 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const getWeekDays = (): Date[] => {
+    // Ensure we generate a full 7-day week including Sunday
     return Array.from({ length: 7 }).map((_, i) => 
       addDays(currentWeekStart, i)
     );

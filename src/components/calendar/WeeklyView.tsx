@@ -47,7 +47,7 @@ const WeeklyView = () => {
               <span className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-gray-500'}`}>
                 {dayName}
               </span>
-              <span className={`text-lg font-bold ${isSelected ? 'text-white' : ''}`}>
+              <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-gray-800'}`}>
                 {dayNumber}
               </span>
               {hasMeals && !isSelected && (
