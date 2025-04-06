@@ -2,26 +2,15 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { format } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { scrapeRecipe } from '@/utils/recipeScraperService';
+import DateSelector from '@/components/meal/DateSelector';
+import MealTypeSelector from '@/components/meal/MealTypeSelector';
+import RecipeUrlInput from '@/components/meal/RecipeUrlInput';
+import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
 
 const AddMeal = () => {
   const navigate = useNavigate();
@@ -37,7 +26,6 @@ const AddMeal = () => {
   const [recipeUrl, setRecipeUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isScraping, setIsScraping] = useState(false);
-  const [lastScrapedUrl, setLastScrapedUrl] = useState("");
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,66 +41,11 @@ const AddMeal = () => {
     navigate('/');
   };
   
-  const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setRecipeUrl(url);
-  };
-  
-  const handleUrlBlur = async () => {
-    // Only attempt to scrape if the URL is reasonably valid and different from last scraped URL
-    if (
-      recipeUrl && 
-      recipeUrl.includes('http') && 
-      (recipeUrl.includes('.com') || recipeUrl.includes('.org') || recipeUrl.includes('.net')) &&
-      recipeUrl !== lastScrapedUrl
-    ) {
-      await scrapeRecipeData(recipeUrl);
-      setLastScrapedUrl(recipeUrl);
-    }
-  };
-  
-  const scrapeRecipeData = async (url: string) => {
-    if (isScraping) return; // Prevent multiple scraping attempts
-    
-    setIsScraping(true);
-    
-    try {
-      const scrapedData = await scrapeRecipe(url);
-      
-      if (scrapedData) {
-        // Only update fields if they're not already filled in
-        if (!title) setTitle(scrapedData.title);
-        
-        if (!ingredients) {
-          const ingredientsList = scrapedData.ingredients.join('\n');
-          setIngredients(ingredientsList);
-        }
-        
-        if (scrapedData.image) {
-          setImageUrl(scrapedData.image);
-        }
-        
-        toast({
-          title: "Recipe Details Loaded",
-          description: "Successfully imported recipe information",
-        });
-      } else {
-        toast({
-          title: "Couldn't Load Recipe",
-          description: "Please enter recipe details manually",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error scraping recipe:", error);
-      toast({
-        title: "Error",
-        description: "Failed to extract recipe details. Please enter manually.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsScraping(false);
-    }
+  const handleScrapedData = (data: { title?: string; ingredients?: string; imageUrl?: string }) => {
+    // Only update fields if they're not already filled in
+    if (data.title && !title) setTitle(data.title);
+    if (data.ingredients && !ingredients) setIngredients(data.ingredients);
+    if (data.imageUrl) setImageUrl(data.imageUrl);
   };
   
   return (
@@ -127,67 +60,22 @@ const AddMeal = () => {
       
       <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
         {/* Date selection */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Day</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                {date ? format(date, 'EEEE, MMM d, yyyy') : 'Select a date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                initialFocus
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateSelector 
+          date={date} 
+          onDateChange={setDate} 
+        />
         
         {/* Meal type selection */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Meal Type</label>
-          <Select value={mealType} onValueChange={setMealType}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select meal type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Breakfast">Breakfast</SelectItem>
-              <SelectItem value="Lunch">Lunch</SelectItem>
-              <SelectItem value="Dinner">Dinner</SelectItem>
-              <SelectItem value="Snacks">Snacks</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <MealTypeSelector 
+          value={mealType} 
+          onChange={setMealType} 
+        />
         
         {/* Recipe URL for scraping */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Recipe URL (optional)</label>
-          <div className="relative">
-            <Input
-              value={recipeUrl}
-              onChange={handleUrlChange}
-              onBlur={handleUrlBlur}
-              placeholder="Paste a link to automatically fetch details"
-              type="url"
-              disabled={isScraping}
-            />
-            {isScraping && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-chow-primary"></div>
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Paste a recipe URL to automatically extract details
-          </p>
-        </div>
+        <RecipeUrlInput 
+          disabled={isScraping}
+          onScrapedData={handleScrapedData}
+        />
         
         {/* Meal details */}
         <div>
@@ -202,19 +90,11 @@ const AddMeal = () => {
         </div>
         
         {/* Image preview if available */}
-        {imageUrl && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Recipe Image</label>
-            <div className="w-full aspect-video max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden">
-              <img 
-                src={imageUrl} 
-                alt={title || "Recipe"} 
-                className="w-full h-full object-cover"
-                onError={() => setImageUrl("")} // Clear image on error
-              />
-            </div>
-          </div>
-        )}
+        <RecipeImagePreview 
+          imageUrl={imageUrl}
+          title={title}
+          onError={() => setImageUrl("")}
+        />
         
         <div>
           <label className="block text-sm font-medium mb-1">Ingredients</label>
