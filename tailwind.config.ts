@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -21,6 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				'outfit': ['Outfit', 'sans-serif'],
+				'sans': ['Outfit', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -66,14 +66,19 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Forkful custom colors
+				'primary-coral': '#f26c54',
+				'warm-white': '#f9f7f2',
+				'charcoal-gray': '#3e3b39',
+				'muted-peach': '#f2a88a',
+				'pistachio-green': '#bfd3b5',
+				'slate-accent': '#8c8d89',
 				forkful: {
-					primary: '#FF7A5A', // Orange - buttons, CTAs
-					secondary: '#10B981', // Green - upvotes, highlights
-					background: '#FFF8F4', // Cream - general background
-					text: '#1F2937', // Slate gray - high readability
-					upvote: '#22C55E', // Upvote color
-					downvote: '#EF4444', // Downvote color
+					primary: '#f26c54',
+					secondary: '#bfd3b5',
+					background: '#f9f7f2',
+					text: '#3e3b39',
+					upvote: '#bfd3b5',
+					downvote: '#f26c54',
 				},
 			},
 			borderRadius: {

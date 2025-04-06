@@ -41,8 +41,8 @@
   }
 
   body {
-    @apply bg-forkful-background text-forkful-text;
-    font-family: 'Inter', sans-serif;
+    @apply bg-warm-white text-charcoal-gray;
+    font-family: 'Outfit', sans-serif;
   }
 }
 
@@ -56,7 +56,7 @@
   }
   
   .tab-active {
-    @apply border-b-2 border-forkful-primary text-forkful-primary;
+    @apply border-b-2 border-primary-coral text-primary-coral;
   }
   
   .vote-button {
@@ -64,15 +64,15 @@
   }
   
   .upvote {
-    @apply bg-forkful-upvote/10 text-forkful-upvote;
+    @apply bg-pistachio-green/10 text-pistachio-green;
   }
   
   .downvote {
-    @apply bg-forkful-downvote/10 text-forkful-downvote;
+    @apply bg-primary-coral/10 text-primary-coral;
   }
   
   .meal-card {
-    @apply flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-100 mb-4;
+    @apply flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-accent/20 mb-4;
   }
   
   .meal-image {

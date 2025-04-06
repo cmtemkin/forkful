@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
@@ -100,29 +101,29 @@ const VotingFeed = () => {
   // Function to get badge color based on day
   const getDayBadgeColor = (day: string) => {
     switch(day) {
-      case 'Monday': return 'bg-blue-100 text-blue-800';
-      case 'Tuesday': return 'bg-purple-100 text-purple-800';
-      case 'Wednesday': return 'bg-green-100 text-green-800';
-      case 'Thursday': return 'bg-yellow-100 text-yellow-800';
-      case 'Friday': return 'bg-red-100 text-red-800';
-      case 'Saturday': return 'bg-indigo-100 text-indigo-800';
-      case 'Sunday': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Monday': return 'bg-muted-peach/20 text-muted-peach';
+      case 'Tuesday': return 'bg-pistachio-green/20 text-pistachio-green';
+      case 'Wednesday': return 'bg-primary-coral/20 text-primary-coral';
+      case 'Thursday': return 'bg-slate-accent/20 text-slate-accent';
+      case 'Friday': return 'bg-primary-coral/20 text-primary-coral';
+      case 'Saturday': return 'bg-pistachio-green/20 text-pistachio-green';
+      case 'Sunday': return 'bg-muted-peach/20 text-muted-peach';
+      default: return 'bg-slate-accent/20 text-slate-accent';
     }
   };
 
   return (
     <div className="pb-20 relative">
       {/* Filter tabs */}
-      <div className="px-4 py-2 bg-white border-b">
+      <div className="px-4 py-2 bg-white border-b border-slate-accent/10">
         <button 
-          className={`px-2 py-2 ${selectedFilter === 'By Date' ? 'tab-active' : 'text-gray-500'}`}
+          className={`px-2 py-2 ${selectedFilter === 'By Date' ? 'tab-active' : 'text-slate-accent'}`}
           onClick={() => handleFilterChange('By Date')}
         >
           By Date
         </button>
         <button 
-          className={`px-2 py-2 ml-4 ${selectedFilter === 'By Votes' ? 'tab-active' : 'text-gray-500'}`}
+          className={`px-2 py-2 ml-4 ${selectedFilter === 'By Votes' ? 'tab-active' : 'text-slate-accent'}`}
           onClick={() => handleFilterChange('By Votes')}
         >
           By Votes
@@ -148,12 +149,25 @@ const VotingFeed = () => {
                   </div>
                 }
                 mealTypeBadge={
-                  <div className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 ml-2">
+                  <div className="inline-flex items-center rounded-full bg-warm-white px-2 py-1 text-xs font-medium text-charcoal-gray ml-2">
                     {getMealTypeIcon(meal.mealType)}
                     {meal.mealType}
                   </div>
                 }
               />
+              
+              {/* Add new idea button - positioned at the right side of each meal card */}
+              {meal.id === meals[meals.length - 1].id && (
+                <div className="absolute bottom-4 right-4">
+                  <Link 
+                    to="/add-meal"
+                    className="bg-primary-coral text-white h-10 w-10 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
+                    aria-label="Add new idea"
+                  >
+                    <Plus size={20} />
+                  </Link>
+                </div>
+              )}
             </div>
           ))
         ) : (
@@ -164,17 +178,6 @@ const VotingFeed = () => {
             actionText="Add New Idea"
           />
         )}
-      </div>
-      
-      {/* Add new idea button - moved to bottom right */}
-      <div className="fixed bottom-28 right-4 z-10">
-        <Link 
-          to="/add-meal"
-          className="bg-[#FF7A5A] text-white h-12 w-12 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
-          aria-label="Add new idea"
-        >
-          <Plus size={24} />
-        </Link>
       </div>
     </div>
   );
