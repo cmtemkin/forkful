@@ -81,7 +81,7 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
       return {
         ...household,
         members
-      } as Household;
+      };
     })
   );
 
@@ -108,8 +108,8 @@ async function getHouseholdMembers(householdId: string): Promise<HouseholdMember
   }
   
   // For each member, get their profile separately
-  const membersWithProfiles: HouseholdMember[] = await Promise.all(
-    rawMembers.map(async (member: RawHouseholdMember) => {
+  const membersWithProfiles = await Promise.all(
+    rawMembers.map(async (member: RawHouseholdMember): Promise<HouseholdMember> => {
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
