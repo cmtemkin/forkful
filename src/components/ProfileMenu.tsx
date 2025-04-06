@@ -13,17 +13,25 @@ import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const ProfileMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const getInitials = () => {
-    if (!user?.email) return '?';
-    
-    const email = user.email;
-    if (email.includes('@')) {
-      return email.split('@')[0].slice(0, 2).toUpperCase();
+    // Check if profile has first and last name
+    const firstName = user?.user_metadata?.first_name || '';
+    const lastName = user?.user_metadata?.last_name || '';
+
+    // If both first and last name exist, return their first initials
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
     }
-    return email.slice(0, 2).toUpperCase();
+
+    // Fallback to email if no names
+    if (user?.email) {
+      return user.email.slice(0, 2).toUpperCase();
+    }
+
+    return '?';
   };
 
   const handleSignOut = async () => {
