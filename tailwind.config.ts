@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// ChowDown custom colors
+				chow: {
+					primary: '#F97316', // Orange - buttons, CTAs
+					secondary: '#10B981', // Green - upvotes, highlights
+					background: '#FFF8F4', // Cream - general background
+					text: '#1F2937', // Slate gray - high readability
+					upvote: '#22C55E', // Upvote color
+					downvote: '#EF4444', // Downvote color
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
