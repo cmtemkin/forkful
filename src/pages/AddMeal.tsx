@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Camera } from 'lucide-react';
@@ -44,7 +43,7 @@ const AddMeal = () => {
     }
     
     // Get current meals from localStorage or initialize with empty array
-    const existingMeals = localStorage.getItem('chowdown_meals');
+    const existingMeals = localStorage.getItem('forkful_meals');
     const meals = existingMeals ? JSON.parse(existingMeals) : [];
     
     // Create a new meal object
@@ -65,7 +64,7 @@ const AddMeal = () => {
     const updatedMeals = [newMeal, ...meals];
     
     // Save to localStorage
-    localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+    localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
     
     // Log for debugging
     console.log({ date, mealType, title, ingredients, recipeUrl, imageUrl });
@@ -102,7 +101,7 @@ const AddMeal = () => {
   return (
     <div className="pb-20">
       {/* Header */}
-      <div className="bg-chow-primary text-white px-4 py-6 flex items-center">
+      <div className="bg-primary-coral text-white px-4 py-6 flex items-center">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
@@ -160,7 +159,7 @@ const AddMeal = () => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Ingredients</label>
+          <label className="block text-sm font-medium mb-1">Ingredients (one per line)</label>
           <Textarea
             value={ingredients}
             onChange={(e) => setIngredients(e.target.value)}
@@ -168,11 +167,12 @@ const AddMeal = () => {
             className="min-h-[100px]"
             disabled={isScraping}
           />
+          <p className="text-xs text-slate-accent mt-1">Press Enter for a new ingredient</p>
         </div>
         
         <Button 
           type="submit" 
-          className="w-full bg-chow-primary hover:bg-chow-primary/90 text-white py-6 rounded-full"
+          className="w-full bg-primary-coral hover:bg-primary-coral/90 text-white py-6 rounded-full"
           disabled={isScraping}
         >
           {isScraping ? <LoadingSpinner /> : "Add Idea"}

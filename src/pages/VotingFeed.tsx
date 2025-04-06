@@ -155,19 +155,6 @@ const VotingFeed = () => {
                   </div>
                 }
               />
-              
-              {/* Add new idea button - positioned at the right side of each meal card */}
-              {meal.id === meals[meals.length - 1].id && (
-                <div className="absolute bottom-4 right-4">
-                  <Link 
-                    to="/add-meal"
-                    className="bg-primary-coral text-white h-10 w-10 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
-                    aria-label="Add new idea"
-                  >
-                    <Plus size={20} />
-                  </Link>
-                </div>
-              )}
             </div>
           ))
         ) : (
@@ -178,6 +165,17 @@ const VotingFeed = () => {
             actionText="Add New Idea"
           />
         )}
+      </div>
+      
+      {/* Floating add button */}
+      <div className="fixed bottom-28 right-4">
+        <Link 
+          to="/add-meal"
+          className="bg-primary-coral text-white h-14 w-14 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200 z-50"
+          aria-label="Add new idea"
+        >
+          <Plus size={24} />
+        </Link>
       </div>
     </div>
   );

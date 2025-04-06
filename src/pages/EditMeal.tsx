@@ -36,7 +36,7 @@ const EditMeal = () => {
   
   useEffect(() => {
     // Load existing meal data
-    const storedMeals = localStorage.getItem('chowdown_meals');
+    const storedMeals = localStorage.getItem('forkful_meals');
     if (storedMeals && id) {
       const meals = JSON.parse(storedMeals);
       const meal = meals.find((m: any) => m.id === id);
@@ -45,7 +45,7 @@ const EditMeal = () => {
         setOriginalMeal(meal);
         setValue('title', meal.title);
         setValue('mealType', meal.mealType);
-        setValue('ingredients', Array.isArray(meal.ingredients) ? meal.ingredients.join(', ') : '');
+        setValue('ingredients', Array.isArray(meal.ingredients) ? meal.ingredients.join('\n') : '');
         setValue('sourceUrl', meal.sourceUrl || '');
         setValue('image', meal.image || '');
         setValue('day', meal.day || 'Monday');
@@ -103,14 +103,14 @@ const EditMeal = () => {
     setIsLoading(true);
     
     try {
-      // Process ingredients - split by commas and trim whitespace
+      // Process ingredients - split by newlines and trim whitespace
       const ingredients = data.ingredients
-        .split(',')
+        .split('\n')
         .map(item => item.trim())
         .filter(item => item !== '');
       
       // Update meal in localStorage
-      const storedMeals = localStorage.getItem('chowdown_meals');
+      const storedMeals = localStorage.getItem('forkful_meals');
       if (storedMeals && id) {
         const meals = JSON.parse(storedMeals);
         const updatedMeals = meals.map((meal: any) => {
@@ -129,7 +129,7 @@ const EditMeal = () => {
           return meal;
         });
         
-        localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
       }
       
       toast({
@@ -155,7 +155,7 @@ const EditMeal = () => {
   if (!originalMeal) {
     return (
       <div className="flex justify-center items-center h-[70vh]">
-        <div className="w-8 h-8 border-4 border-t-chow-primary rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-t-primary-coral rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -170,7 +170,7 @@ const EditMeal = () => {
         <button 
           onClick={handleSubmit(onSubmit)}
           disabled={isLoading}
-          className="text-chow-primary"
+          className="text-primary-coral"
         >
           <Save className="h-6 w-6" />
         </button>
@@ -218,12 +218,13 @@ const EditMeal = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Ingredients (comma separated)</label>
+            <label className="block text-sm font-medium mb-1">Ingredients (one per line)</label>
             <Textarea
               {...register("ingredients")}
-              placeholder="Enter ingredients separated by commas"
+              placeholder="Enter ingredients, one per line"
               className="min-h-[100px]"
             />
+            <p className="text-xs text-slate-accent mt-1">Press Enter for a new ingredient</p>
           </div>
           
           <div>
