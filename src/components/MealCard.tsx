@@ -13,6 +13,8 @@ interface MealCardProps {
   downvotes: number;
   isLocked?: boolean;
   dayMealtime?: string;
+  dayBadge?: React.ReactNode;
+  mealTypeBadge?: React.ReactNode;
 }
 
 const MealCard = ({
@@ -23,7 +25,9 @@ const MealCard = ({
   upvotes,
   downvotes,
   isLocked = false,
-  dayMealtime
+  dayMealtime,
+  dayBadge,
+  mealTypeBadge
 }: MealCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [localUpvotes, setLocalUpvotes] = useState(upvotes);
@@ -137,6 +141,12 @@ const MealCard = ({
             <div>
               <h3 className="text-lg font-semibold">{title}</h3>
               <p className="text-sm text-gray-500">{submittedBy}</p>
+              
+              {/* Day and meal type badges */}
+              <div className="flex mt-1 flex-wrap">
+                {dayBadge}
+                {mealTypeBadge}
+              </div>
             </div>
             {isLocked && (
               <Lock className="h-5 w-5 text-gray-400" />
@@ -145,7 +155,7 @@ const MealCard = ({
           <div className="flex gap-3 mt-2">
             <div className="flex items-center">
               <button 
-                className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-chow-upvote/30' : ''}`}
+                className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-forkful-upvote/30' : ''}`}
                 disabled={isLocked}
                 onClick={handleUpvote}
               >
@@ -155,7 +165,7 @@ const MealCard = ({
             </div>
             <div className="flex items-center">
               <button 
-                className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-chow-downvote/30' : ''}`}
+                className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-forkful-downvote/30' : ''}`}
                 disabled={isLocked}
                 onClick={handleDownvote}
               >

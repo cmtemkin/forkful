@@ -4,23 +4,27 @@ import React from 'react';
 interface LogoProps {
   className?: string;
   size?: 'small' | 'medium' | 'large';
+  inverted?: boolean;
 }
 
-const Logo = ({ className = '', size = 'medium' }: LogoProps) => {
+const Logo = ({ className = '', size = 'medium', inverted = false }: LogoProps) => {
   const sizes = {
     small: 'h-8',
     medium: 'h-12',
     large: 'h-24'
   };
   
+  const iconColor = inverted ? "text-[#FF7A5A]" : "text-white";
+  const bgColor = inverted ? "bg-white" : "bg-[#FF7A5A]";
+  
   return (
     <div className={`flex flex-col items-center ${className}`}>
-      <div className={`bg-[#FF7A5A] rounded-2xl p-4 ${sizes[size]}`}>
+      <div className={`${bgColor} rounded-2xl p-4 ${sizes[size]}`}>
         <svg 
           viewBox="0 0 24 24" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg" 
-          className={`${sizes[size]} text-white`}
+          className={`${sizes[size]} ${iconColor}`}
         >
           {/* Fork icon */}
           <path 

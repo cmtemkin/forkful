@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
 import MealCard from '../components/MealCard';
 import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Logo from '../components/Logo';
 import { Badge } from "@/components/ui/badge";
 
 // Sample data - in a real app, this would come from an API
@@ -47,13 +48,24 @@ const getInitialMeals = () => {
   return storedMeals ? JSON.parse(storedMeals) : mockMeals;
 };
 
+// Function to get meal type icon
+const getMealTypeIcon = (mealType: string) => {
+  switch(mealType.toLowerCase()) {
+    case 'breakfast':
+      return <Coffee className="h-3 w-3 mr-1" />;
+    case 'lunch':
+      return <UtensilsCrossed className="h-3 w-3 mr-1" />;
+    case 'dinner':
+      return <UtensilsCrossed className="h-3 w-3 mr-1" />;
+    default:
+      return <Clock className="h-3 w-3 mr-1" />;
+  }
+};
+
 const VotingFeed = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('By Date');
   const [meals, setMeals] = useState(getInitialMeals);
-  
-  // Get the current day and mealtime for the header
-  const currentDayMeal = 'Monday Dinner';
   
   useEffect(() => {
     // Update localStorage whenever meals change
@@ -106,13 +118,7 @@ const VotingFeed = () => {
     <div className="pb-20">
       {/* Header with logo */}
       <div className="bg-[#FF7A5A] text-white px-4 py-4 flex justify-center">
-        <div className="w-32">
-          <img 
-            src="/lovable-uploads/ee2fee59-cbb5-4a35-ae3f-7e3c36de6388.png" 
-            alt="Forkful" 
-            className="w-full" 
-          />
-        </div>
+        <Logo size="medium" />
       </div>
       
       {/* Filter tabs */}
@@ -136,11 +142,6 @@ const VotingFeed = () => {
         {meals.length > 0 ? (
           meals.map(meal => (
             <div key={meal.id} className="relative">
-              <div className="absolute -top-2 left-24 z-10">
-                <div className={`rounded-full px-2 py-0.5 text-xs font-medium ${getDayBadgeColor(meal.day)}`}>
-                  {meal.day}
-                </div>
-              </div>
               <MealCard
                 id={meal.id}
                 title={meal.title}
@@ -149,6 +150,17 @@ const VotingFeed = () => {
                 upvotes={meal.upvotes}
                 downvotes={meal.downvotes}
                 dayMealtime={`${meal.day} ${meal.mealType}`}
+                dayBadge={
+                  <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getDayBadgeColor(meal.day)}`}>
+                    {meal.day}
+                  </div>
+                }
+                mealTypeBadge={
+                  <div className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 ml-2">
+                    {getMealTypeIcon(meal.mealType)}
+                    {meal.mealType}
+                  </div>
+                }
               />
             </div>
           ))
