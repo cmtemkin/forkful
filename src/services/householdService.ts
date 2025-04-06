@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Types
 export interface Household {
   id: string;
   name: string;
@@ -21,6 +22,21 @@ export interface HouseholdMember {
   };
 }
 
+// Interface for member without profile
+interface RawHouseholdMember {
+  id: string;
+  household_id: string;
+  user_id: string;
+  role: string;
+  joined_at: string;
+}
+
+// Interface for profile data
+interface ProfileData {
+  display_name: string;
+  avatar_url?: string;
+}
+
 // Get all households the current user belongs to
 export const getUserHouseholds = async (): Promise<Household[]> => {
   const { data: userData } = await supabase.auth.getUser();
@@ -31,7 +47,7 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   
   const userId = userData.user.id;
   
-  // First get all households where user is a member
+  // Get all household IDs where user is a member
   const { data: memberHouseholds, error: memberError } = await supabase
     .from('household_members')
     .select('household_id')
@@ -45,8 +61,8 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   // Get household IDs where user is a member
   const householdIds = memberHouseholds.map(h => h.household_id);
   
-  // Now get all households where user is either the creator or a member
-  const { data, error } = await supabase
+  // Fetch households data
+  const { data: households, error } = await supabase
     .from('households')
     .select(`
       id,
@@ -63,13 +79,15 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   }
   
   // For each household, fetch the members
-  const householdsWithMembers = await Promise.all(data.map(async (household) => {
-    const members = await getHouseholdMembers(household.id);
-    return {
-      ...household,
-      members
-    };
-  }));
+  const householdsWithMembers: Household[] = await Promise.all(
+    households.map(async (household) => {
+      const members = await getHouseholdMembers(household.id);
+      return {
+        ...household,
+        members
+      };
+    })
+  );
 
   return householdsWithMembers;
 };
@@ -77,7 +95,7 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
 // Helper function to get household members with profiles
 async function getHouseholdMembers(householdId: string): Promise<HouseholdMember[]> {
   // Get members without profile data
-  const { data: members, error: membersError } = await supabase
+  const { data: rawMembers, error: membersError } = await supabase
     .from('household_members')
     .select(`
       id,
@@ -88,47 +106,48 @@ async function getHouseholdMembers(householdId: string): Promise<HouseholdMember
     `)
     .eq('household_id', householdId);
   
-  if (membersError || !members) {
+  if (membersError || !rawMembers) {
     console.error(`Error fetching members for household ${householdId}:`, membersError);
     return [];
   }
   
   // For each member, get their profile separately
-  const membersWithProfiles = await Promise.all(members.map(async (member) => {
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('display_name, avatar_url')
-        .eq('id', member.user_id)
-        .single();
-      
-      if (profileError || !profileData) {
+  const membersWithProfiles = await Promise.all(
+    rawMembers.map(async (member: RawHouseholdMember) => {
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('id', member.user_id)
+          .single();
+        
+        if (profileError || !profileData) {
+          return createMemberWithDefaultProfile(member);
+        }
+        
         return {
           ...member,
-          profile: {
-            display_name: 'Unknown User',
-            avatar_url: undefined
-          }
+          profile: profileData as ProfileData
         };
+      } catch (error) {
+        console.warn(`Could not fetch profile for user ${member.user_id}`, error);
+        return createMemberWithDefaultProfile(member);
       }
-      
-      return {
-        ...member,
-        profile: profileData
-      };
-    } catch (error) {
-      console.warn(`Could not fetch profile for user ${member.user_id}`, error);
-      return {
-        ...member,
-        profile: {
-          display_name: 'Unknown User',
-          avatar_url: undefined
-        }
-      };
-    }
-  }));
+    })
+  );
   
   return membersWithProfiles;
+}
+
+// Helper function to create a member with default profile
+function createMemberWithDefaultProfile(member: RawHouseholdMember): HouseholdMember {
+  return {
+    ...member,
+    profile: {
+      display_name: 'Unknown User',
+      avatar_url: undefined
+    }
+  };
 }
 
 // Create a new household
