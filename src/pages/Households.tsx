@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { getUserHouseholds, createHousehold, Household } from '@/services/householdService';
+import { getUserHouseholds, createHousehold } from '@/services/householdService';
+import { Household } from '@/types/household';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const Households = () => {

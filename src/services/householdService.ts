@@ -1,47 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
-
-// Types
-export interface Household {
-  id: string;
-  name: string;
-  created_at: string;
-  created_by: string;
-  members?: HouseholdMember[];
-}
-
-export interface HouseholdMember {
-  id: string;
-  household_id: string;
-  user_id: string;
-  role: string;
-  joined_at: string;
-  profile?: UserProfile;
-}
-
-export interface UserProfile {
-  display_name: string;
-  avatar_url?: string;
-}
-
-// Raw data interfaces (for internal use)
-interface RawHouseholdMember {
-  id: string;
-  household_id: string;
-  user_id: string;
-  role: string;
-  joined_at: string;
-}
+import { Household } from "@/types/household";
+import { getCurrentUserId, getHouseholdMembers } from "./householdUtils";
 
 // Get all households the current user belongs to
 export const getUserHouseholds = async (): Promise<Household[]> => {
-  const { data: userData } = await supabase.auth.getUser();
-  
-  if (!userData.user) {
-    throw new Error('User not authenticated');
-  }
-  
-  const userId = userData.user.id;
+  const userId = await getCurrentUserId();
   
   // Get all household IDs where user is a member
   const { data: memberHouseholds, error: memberError } = await supabase
@@ -88,81 +52,15 @@ export const getUserHouseholds = async (): Promise<Household[]> => {
   return householdsWithMembers;
 };
 
-// Helper function to get household members with profiles
-async function getHouseholdMembers(householdId: string): Promise<HouseholdMember[]> {
-  // Get members without profile data
-  const { data: rawMembers, error: membersError } = await supabase
-    .from('household_members')
-    .select(`
-      id,
-      household_id,
-      user_id,
-      role,
-      joined_at
-    `)
-    .eq('household_id', householdId);
-  
-  if (membersError || !rawMembers) {
-    console.error(`Error fetching members for household ${householdId}:`, membersError);
-    return [];
-  }
-  
-  // For each member, get their profile separately
-  const membersWithProfiles = await Promise.all(
-    rawMembers.map(async (member: RawHouseholdMember): Promise<HouseholdMember> => {
-      try {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('display_name, avatar_url')
-          .eq('id', member.user_id)
-          .single();
-        
-        if (profileError || !profileData) {
-          return {
-            ...member,
-            profile: {
-              display_name: 'Unknown User',
-              avatar_url: undefined
-            }
-          };
-        }
-        
-        return {
-          ...member,
-          profile: {
-            display_name: profileData.display_name,
-            avatar_url: profileData.avatar_url
-          }
-        };
-      } catch (error) {
-        console.warn(`Could not fetch profile for user ${member.user_id}`, error);
-        return {
-          ...member,
-          profile: {
-            display_name: 'Unknown User',
-            avatar_url: undefined
-          }
-        };
-      }
-    })
-  );
-  
-  return membersWithProfiles;
-}
-
 // Create a new household
 export const createHousehold = async (name: string): Promise<Household> => {
-  const { data: userData } = await supabase.auth.getUser();
-  
-  if (!userData.user) {
-    throw new Error('User not authenticated');
-  }
+  const userId = await getCurrentUserId();
   
   const { data, error } = await supabase
     .from('households')
     .insert({
       name,
-      created_by: userData.user.id
+      created_by: userId
     })
     .select()
     .single();
@@ -177,7 +75,7 @@ export const createHousehold = async (name: string): Promise<Household> => {
     .from('household_members')
     .insert({
       household_id: data.id,
-      user_id: userData.user.id,
+      user_id: userId,
       role: 'admin'
     });
 
@@ -210,35 +108,4 @@ export const getHouseholdById = async (id: string): Promise<Household> => {
     ...household,
     members
   };
-};
-
-// Add member to household
-export const addHouseholdMember = async (householdId: string, email: string): Promise<boolean> => {
-  // First, find the user by email
-  const { data: profileData, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', email)
-    .maybeSingle();
-
-  if (profileError || !profileData) {
-    console.error('Error finding user:', profileError);
-    throw new Error('User not found with that email');
-  }
-
-  // Then add the user to the household
-  const { error } = await supabase
-    .from('household_members')
-    .insert({
-      household_id: householdId,
-      user_id: profileData.id,
-      role: 'member'
-    });
-
-  if (error) {
-    console.error('Error adding member:', error);
-    throw error;
-  }
-
-  return true;
 };

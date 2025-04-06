@@ -1,16 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, UserPlus, Home, CalendarDays, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Plus, UserPlus, Home, CalendarDays, ShoppingCart, Trash2, UserMinus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { getHouseholdById, addHouseholdMember, Household, HouseholdMember } from '@/services/householdService';
+import { getHouseholdById } from '@/services/householdService';
+import { addHouseholdMember, removeHouseholdMember } from '@/services/householdMembersService';
+import { deleteHousehold, updateHouseholdName, leaveHousehold } from '@/services/householdManagementService';
+import { Household, HouseholdMember } from '@/types/household';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 const HouseholdDetail = () => {
@@ -20,7 +23,11 @@ const HouseholdDetail = () => {
   const [household, setHousehold] = useState<Household | null>(null);
   const [members, setMembers] = useState<HouseholdMember[]>([]);
   const [newMemberEmail, setNewMemberEmail] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newHouseholdName, setNewHouseholdName] = useState('');
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -35,6 +42,7 @@ const HouseholdDetail = () => {
         const householdData = await getHouseholdById(id);
         setHousehold(householdData);
         setMembers(householdData.members || []);
+        setNewHouseholdName(householdData.name);
       } catch (error) {
         console.error('Failed to load household details:', error);
         toast({
@@ -78,7 +86,7 @@ const HouseholdDetail = () => {
       });
       
       setNewMemberEmail('');
-      setIsDialogOpen(false);
+      setIsInviteDialogOpen(false);
     } catch (error) {
       console.error('Failed to add member:', error);
       
@@ -86,6 +94,134 @@ const HouseholdDetail = () => {
       
       toast({
         title: "Error inviting member",
+        description: errorMsg,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string, userId: string) => {
+    if (!id) return;
+    
+    try {
+      await removeHouseholdMember(id, userId);
+      
+      // Update local state
+      setMembers(prev => prev.filter(member => member.id !== memberId));
+      
+      toast({
+        title: "Member removed",
+        description: "The member has been removed from the household",
+      });
+    } catch (error) {
+      console.error('Failed to remove member:', error);
+      
+      toast({
+        title: "Error removing member",
+        description: "Could not remove the member. Please try again later.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleDeleteHousehold = async () => {
+    if (!id) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      await deleteHousehold(id);
+      
+      toast({
+        title: "Household deleted",
+        description: "The household has been deleted successfully",
+      });
+      
+      navigate('/households');
+    } catch (error) {
+      console.error('Failed to delete household:', error);
+      
+      const errorMsg = error instanceof Error ? error.message : "Please try again later";
+      
+      toast({
+        title: "Error deleting household",
+        description: errorMsg,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+  
+  const handleLeaveHousehold = async () => {
+    if (!id) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      await leaveHousehold(id);
+      
+      toast({
+        title: "Left household",
+        description: "You have left the household successfully",
+      });
+      
+      navigate('/households');
+    } catch (error) {
+      console.error('Failed to leave household:', error);
+      
+      toast({
+        title: "Error leaving household",
+        description: "Could not leave the household. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+      setIsLeaveDialogOpen(false);
+    }
+  };
+  
+  const handleRenameHousehold = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!id || !newHouseholdName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a household name",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      await updateHouseholdName(id, newHouseholdName);
+      
+      // Update local state
+      if (household) {
+        setHousehold({
+          ...household,
+          name: newHouseholdName
+        });
+      }
+      
+      toast({
+        title: "Household renamed",
+        description: "The household has been renamed successfully",
+      });
+      
+      setIsRenameDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to rename household:', error);
+      
+      const errorMsg = error instanceof Error ? error.message : "Please try again later";
+      
+      toast({
+        title: "Error renaming household",
         description: errorMsg,
         variant: "destructive"
       });
@@ -109,6 +245,11 @@ const HouseholdDetail = () => {
     );
   }
   
+  // Check if user is admin
+  const isAdmin = members.some(member => 
+    member.user_id === household.created_by && member.role === 'admin'
+  );
+  
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
@@ -121,34 +262,61 @@ const HouseholdDetail = () => {
             <Home className="h-6 w-6 mr-2 text-primary-coral" />
             <h1 className="text-2xl font-bold">{household.name}</h1>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite a Member</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAddMember} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="memberEmail">Email Address</Label>
-                  <Input
-                    id="memberEmail"
-                    type="email"
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    placeholder="Enter email address"
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Send Invitation"}
+          <div className="flex gap-2">
+            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite Member
                 </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite a Member</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddMember} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="memberEmail">Email Address</Label>
+                    <Input
+                      id="memberEmail"
+                      type="email"
+                      value={newMemberEmail}
+                      onChange={(e) => setNewMemberEmail(e.target.value)}
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? "Sending..." : "Send Invitation"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+            
+            {isAdmin && (
+              <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Household</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete this household? This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleDeleteHousehold} disabled={isSubmitting}>
+                      {isSubmitting ? "Deleting..." : "Delete Household"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </div>
       </div>
       
@@ -193,6 +361,15 @@ const HouseholdDetail = () => {
                           </div>
                         </div>
                       </div>
+                      {isAdmin && member.user_id !== household.created_by && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleRemoveMember(member.id, member.user_id)}
+                        >
+                          <UserMinus className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -278,18 +455,57 @@ const HouseholdDetail = () => {
                 <div>
                   <Label htmlFor="householdName">Household Name</Label>
                   <div className="flex gap-2 mt-1">
-                    <Input 
-                      id="householdName" 
-                      defaultValue={household.name} 
-                    />
-                    <Button variant="outline">Save</Button>
+                    <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start font-normal">
+                          {household.name}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Rename Household</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleRenameHousehold} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="householdNewName">New Household Name</Label>
+                            <Input
+                              id="householdNewName"
+                              value={newHouseholdName}
+                              onChange={(e) => setNewHouseholdName(e.target.value)}
+                              placeholder="Enter new household name"
+                            />
+                          </div>
+                          <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? "Saving..." : "Save New Name"}
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
                 
                 <div className="pt-4 border-t border-gray-200">
-                  <Button variant="destructive">
-                    Leave Household
-                  </Button>
+                  <Dialog open={isLeaveDialogOpen} onOpenChange={setIsLeaveDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive">
+                        Leave Household
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Leave Household</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to leave this household? You will lose access to all household data.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsLeaveDialogOpen(false)}>Cancel</Button>
+                        <Button variant="destructive" onClick={handleLeaveHousehold} disabled={isSubmitting}>
+                          {isSubmitting ? "Leaving..." : "Leave Household"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </CardContent>
