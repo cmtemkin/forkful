@@ -68,9 +68,18 @@ const AddMeal = () => {
       // Upload image if present
       let finalImageUrl = imageUrl;
       if (imageFile) {
-        const uploadedUrl = await uploadImage(imageFile);
-        if (uploadedUrl) {
-          finalImageUrl = uploadedUrl;
+        try {
+          const uploadedUrl = await uploadImage(imageFile);
+          if (uploadedUrl) {
+            finalImageUrl = uploadedUrl;
+          }
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast({
+            title: "Warning",
+            description: "Failed to upload image, but will continue saving the meal.",
+            variant: "default"
+          });
         }
       }
       
@@ -80,7 +89,7 @@ const AddMeal = () => {
         ingredients: processedIngredients,
         image_path: finalImageUrl || null,
         meal_type: mealType,
-        day: format(date || new Date(), 'EEEE').substring(0, 3)
+        day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon'
       });
       
       toast({
@@ -143,7 +152,7 @@ const AddMeal = () => {
         </div>
         
         {/* Image preview */}
-        <div className="cursor-pointer">
+        <div>
           <label className="block text-sm font-medium mb-1">Recipe Image</label>
           <div className="w-full max-h-48 rounded-lg overflow-hidden">
             <RecipeImagePreview 

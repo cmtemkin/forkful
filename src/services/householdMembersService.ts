@@ -49,13 +49,14 @@ export const addHouseholdMember = async (householdId: string, email: string, rol
     .from('profiles')
     .select('id')
     .eq('email', email)
-    .single();
+    .maybeSingle();
 
   if (userError) {
-    if (userError.code === 'PGRST116') {
-      throw new Error(`No user found with email ${email}`);
-    }
     throw userError;
+  }
+
+  if (!userData) {
+    throw new Error(`No user found with email ${email}`);
   }
 
   // Check if user is already a member
@@ -66,7 +67,7 @@ export const addHouseholdMember = async (householdId: string, email: string, rol
     .eq('user_id', userData.id)
     .maybeSingle();
 
-  if (memberCheckError && memberCheckError.code !== 'PGRST116') {
+  if (memberCheckError) {
     throw memberCheckError;
   }
 
@@ -121,9 +122,9 @@ export const isUserHouseholdAdmin = async (householdId: string, user: User): Pro
     .select('role')
     .eq('household_id', householdId)
     .eq('user_id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (error) {
+  if (error || !data) {
     return false;
   }
 
