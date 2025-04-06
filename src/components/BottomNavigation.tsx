@@ -29,11 +29,13 @@ const BottomNavigation = () => {
         <NavLink 
           to="/add-meal" 
           className={({ isActive }) => 
-            `bottom-nav-item py-4 ${isActive ? 'text-chow-primary' : 'text-gray-500'}`
+            `bottom-nav-item py-2 ${isActive ? 'text-white' : 'text-white'}`
           }
         >
-          <Plus className="bottom-nav-icon" />
-          <span>Add</span>
+          <div className="bg-primary-coral rounded-full w-12 h-12 flex items-center justify-center shadow-md">
+            <Plus className="bottom-nav-icon" />
+          </div>
+          <span className="text-gray-500 mt-1">Add</span>
         </NavLink>
         <NavLink 
           to="/grocery-list" 

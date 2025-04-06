@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
@@ -165,17 +164,6 @@ const VotingFeed = () => {
             actionText="Add New Idea"
           />
         )}
-      </div>
-      
-      {/* Fixed add button */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <Link 
-          to="/add-meal"
-          className="bg-primary-coral text-white h-14 w-14 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
-          aria-label="Add new idea"
-        >
-          <Plus size={24} />
-        </Link>
       </div>
     </div>
   );
