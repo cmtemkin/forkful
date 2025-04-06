@@ -4,6 +4,7 @@ import { format, isToday, isSameDay } from 'date-fns';
 import { useCalendar, MealType } from '@/contexts/CalendarContext';
 import MealCard from './MealCard';
 import { Link } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const WeeklyView = () => {
   const { 
@@ -14,6 +15,7 @@ const WeeklyView = () => {
     getMealsByType 
   } = useCalendar();
   
+  const isMobile = useIsMobile();
   const weekDays = getWeekDays();
 
   const handleDaySelect = (date: Date) => {
@@ -23,7 +25,7 @@ const WeeklyView = () => {
   return (
     <div className="flex flex-col w-full">
       {/* Day selector */}
-      <div className="flex overflow-x-auto py-2 px-1 bg-white sticky top-0 z-10 border-b">
+      <div className="flex overflow-x-auto py-2 px-1 bg-white sticky top-0 z-10 border-b no-scrollbar">
         {weekDays.map((day) => {
           const dayNumber = format(day, 'd');
           const dayName = format(day, 'EEE');
@@ -34,7 +36,7 @@ const WeeklyView = () => {
           return (
             <button
               key={day.toString()}
-              className={`flex flex-col items-center min-w-[3.5rem] mx-1 rounded-full py-2 px-3 ${
+              className={`flex flex-col items-center ${isMobile ? 'min-w-[2.8rem]' : 'min-w-[3.5rem]'} mx-1 rounded-full py-1 px-2 ${
                 isSelected 
                   ? 'bg-primary-coral text-white' 
                   : isCurrentDay 
@@ -43,16 +45,14 @@ const WeeklyView = () => {
               }`}
               onClick={() => handleDaySelect(day)}
             >
-              <span className={isSelected ? 'text-xs font-medium text-white' : 'text-xs font-medium text-black'}>
+              <span className={`${isMobile ? 'text-xs' : 'text-xs'} font-medium ${isSelected ? 'text-white' : 'text-black'}`}>
                 {dayName}
               </span>
-              <span className={isSelected 
-                ? 'text-lg font-bold text-white' 
-                : 'text-lg font-bold text-black'}>
+              <span className={`${isMobile ? 'text-base' : 'text-lg'} font-bold ${isSelected ? 'text-white' : 'text-black'}`}>
                 {dayNumber}
               </span>
               {hasMeals && !isSelected && (
-                <div className="h-1 w-1 bg-chow-primary rounded-full mt-1"></div>
+                <div className="h-1 w-1 bg-chow-primary rounded-full mt-0.5"></div>
               )}
             </button>
           );

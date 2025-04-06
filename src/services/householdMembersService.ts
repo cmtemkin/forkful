@@ -13,7 +13,7 @@ export const getHouseholdMembers = async (householdId: string): Promise<Househol
       user_id,
       role,
       joined_at,
-      profiles:user_id (
+      profiles (
         id,
         display_name,
         avatar_url
