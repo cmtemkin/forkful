@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock, ImageIcon } from 'lucide-react';
 
 interface CalendarCellProps {
   mealId?: string;
@@ -20,6 +20,20 @@ const CalendarCell = ({
   day,
   mealType
 }: CalendarCellProps) => {
+  const [imageError, setImageError] = useState(false);
+  
+  const generatePlaceholderColor = (title: string) => {
+    // Generate a deterministic color based on the title
+    let hash = 0;
+    for (let i = 0; i < title?.length || 0; i++) {
+      hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Generate hue (0-360), high saturation and light
+    const h = Math.abs(hash % 360);
+    return `hsl(${h}, 70%, 80%)`;
+  };
+  
   if (!mealId) {
     return (
       <Link 
@@ -37,11 +51,21 @@ const CalendarCell = ({
       to={`/meal/${mealId}`}
       className="border border-gray-200 h-24 flex flex-col relative overflow-hidden"
     >
-      <img 
-        src={image || "/placeholder.svg"} 
-        alt={title}
-        className="w-full h-full object-cover"
-      />
+      {image && !imageError ? (
+        <img 
+          src={image} 
+          alt={title}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <div 
+          className="w-full h-full flex flex-col items-center justify-center p-2"
+          style={{ backgroundColor: generatePlaceholderColor(title || 'Meal') }}
+        >
+          <ImageIcon className="h-6 w-6 text-white/70 mb-1" />
+        </div>
+      )}
       <div className="absolute inset-0 bg-black/30 flex flex-col justify-end p-2">
         <div className="flex justify-between items-start">
           <span className="text-xs font-medium text-white">{title}</span>

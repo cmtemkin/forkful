@@ -1,9 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
+import { ImageIcon } from 'lucide-react';
 
 // Sample data - in a real app, this would come from an API
 const mockMealData = {
@@ -27,9 +40,11 @@ const mockMealData = {
 const MealDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [meal, setMeal] = useState<any>(null);
   const [isLocked, setIsLocked] = useState(false);
+  const [imageError, setImageError] = useState(false);
   
   useEffect(() => {
     // In a real app, fetch the meal data from your API here
@@ -43,6 +58,29 @@ const MealDetail = () => {
   const toggleLock = () => {
     setIsLocked(!isLocked);
     // In a real app, you would update this in your database
+  };
+  
+  const handleDeleteMeal = () => {
+    // In a real app, this would delete the meal from your database
+    toast({
+      title: "Meal deleted",
+      description: "The meal has been successfully deleted.",
+    });
+    
+    // Navigate back to the calendar view
+    navigate('/calendar');
+  };
+  
+  const generatePlaceholderColor = (title: string) => {
+    // Generate a deterministic color based on the title
+    let hash = 0;
+    for (let i = 0; i < title?.length || 0; i++) {
+      hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Generate hue (0-360), high saturation and light
+    const h = Math.abs(hash % 360);
+    return `hsl(${h}, 70%, 80%)`;
   };
   
   if (isLoading) {
@@ -71,11 +109,22 @@ const MealDetail = () => {
       {/* Meal image */}
       <div className="relative pt-12">
         <div className="bg-green-800 aspect-square">
-          <img 
-            src={meal.image || "/placeholder.svg"} 
-            alt={meal.title}
-            className="w-full h-full object-cover"
-          />
+          {meal.image && !imageError ? (
+            <img 
+              src={meal.image} 
+              alt={meal.title}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div 
+              className="w-full h-full flex flex-col items-center justify-center p-4"
+              style={{ backgroundColor: generatePlaceholderColor(meal.title) }}
+            >
+              <ImageIcon className="h-16 w-16 text-white/70 mb-2" />
+              <span className="text-lg font-medium text-white text-center">{meal.title}</span>
+            </div>
+          )}
         </div>
       </div>
       
@@ -144,6 +193,36 @@ const MealDetail = () => {
               <span>View Original Recipe</span>
             </Button>
           )}
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="border-chow-downvote/20 hover:bg-chow-downvote/10 text-chow-downvote"
+              >
+                <Trash2 className="mr-2 h-5 w-5" />
+                <span>Delete This Meal</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the meal
+                  from your calendar.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteMeal}
+                  className="bg-chow-downvote text-white hover:bg-chow-downvote/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>

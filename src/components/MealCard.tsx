@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Lock, ThumbsUp, ThumbsDown, ImageIcon } from 'lucide-react';
 
 interface MealCardProps {
   id: string;
@@ -24,14 +24,41 @@ const MealCard = ({
   isLocked = false,
   dayMealtime
 }: MealCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  
+  const generatePlaceholderColor = (title: string) => {
+    // Generate a deterministic color based on the title
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) {
+      hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Generate hue (0-360), high saturation and light
+    const h = Math.abs(hash % 360);
+    return `hsl(${h}, 70%, 80%)`;
+  };
+  
   return (
     <Link to={`/meal/${id}`} className="block">
       <div className="meal-card">
-        <img 
-          src={image || "/placeholder.svg"} 
-          alt={title}
-          className="meal-image"
-        />
+        <div className="w-20 h-20 rounded-lg overflow-hidden">
+          {image && !imageError ? (
+            <img 
+              src={image} 
+              alt={title}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div 
+              className="w-full h-full flex items-center justify-center"
+              style={{ backgroundColor: generatePlaceholderColor(title) }}
+            >
+              <ImageIcon className="h-6 w-6 text-white/70" />
+            </div>
+          )}
+        </div>
+        
         <div className="flex-1">
           <div className="flex justify-between items-start">
             <div>

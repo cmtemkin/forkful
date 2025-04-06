@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { ImageIcon } from 'lucide-react';
 
 interface RecipeImagePreviewProps {
   imageUrl: string;
@@ -8,18 +9,47 @@ interface RecipeImagePreviewProps {
 }
 
 const RecipeImagePreview = ({ imageUrl, title, onError }: RecipeImagePreviewProps) => {
-  if (!imageUrl) return null;
+  const [hasError, setHasError] = useState(false);
+  
+  const handleError = () => {
+    setHasError(true);
+    onError();
+  };
+  
+  const generatePlaceholderColor = (title: string) => {
+    // Generate a deterministic color based on the title
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) {
+      hash = title.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Generate hue (0-360), high saturation and light
+    const h = Math.abs(hash % 360);
+    return `hsl(${h}, 70%, 80%)`;
+  };
   
   return (
     <div>
       <label className="block text-sm font-medium mb-1">Recipe Image</label>
       <div className="w-full aspect-video max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt={title || "Recipe"} 
-          className="w-full h-full object-cover"
-          onError={onError}
-        />
+        {!imageUrl || hasError ? (
+          <div 
+            className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
+            style={{ backgroundColor: generatePlaceholderColor(title || 'Recipe') }}
+          >
+            <ImageIcon className="h-10 w-10 text-gray-500 mb-2" />
+            <span className="text-sm font-medium text-gray-700 break-words">
+              {title || "Recipe"}
+            </span>
+          </div>
+        ) : (
+          <img 
+            src={imageUrl} 
+            alt={title || "Recipe"} 
+            className="w-full h-full object-cover"
+            onError={handleError}
+          />
+        )}
       </div>
     </div>
   );
