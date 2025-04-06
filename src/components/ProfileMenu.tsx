@@ -13,7 +13,7 @@ import { LogOut, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const ProfileMenu = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const getInitials = () => {

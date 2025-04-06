@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -69,6 +70,38 @@ const Auth = () => {
     } catch (error) {
       toast({
         title: "Error signing up",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignIn = async (values: FormValues) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        toast({
+          title: "Error signing in",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
+        navigate('/');
+      }
+    } catch (error) {
+      toast({
+        title: "Error signing in",
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
