@@ -1,239 +1,52 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { X, Save, Calendar } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import MealTypeSelector from '../components/meal/MealTypeSelector';
-import RecipeUrlInput from '../components/meal/RecipeUrlInput';
-import RecipeImagePreview from '../components/meal/RecipeImagePreview';
-import DateSelector from '../components/meal/DateSelector';
-
-interface FormValues {
-  title: string;
-  ingredients: string;
-  sourceUrl?: string;
-  image?: string;
-  mealType: string;
-  day: string;
-}
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { useEditMeal } from '@/hooks/useEditMeal';
+import EditMealHeader from '@/components/meal/EditMealHeader';
+import EditMealForm from '@/components/meal/EditMealForm';
+import EditMealLoader from '@/components/meal/EditMealLoader';
 
 const EditMeal = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(false);
-  const [originalMeal, setOriginalMeal] = useState<any>(null);
-  
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>();
-  
-  const image = watch('image');
-  const mealType = watch('mealType');
-  
-  useEffect(() => {
-    // Load existing meal data
-    const storedMeals = localStorage.getItem('forkful_meals');
-    if (storedMeals && id) {
-      const meals = JSON.parse(storedMeals);
-      const meal = meals.find((m: any) => m.id === id);
-      
-      if (meal) {
-        setOriginalMeal(meal);
-        setValue('title', meal.title);
-        setValue('mealType', meal.mealType);
-        setValue('ingredients', Array.isArray(meal.ingredients) ? meal.ingredients.join('\n') : '');
-        setValue('sourceUrl', meal.sourceUrl || '');
-        setValue('image', meal.image || '');
-        setValue('day', meal.day || 'Monday');
-        
-        // Convert day string to date if possible
-        try {
-          const today = new Date();
-          const dayMap: {[key: string]: number} = {
-            'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 0
-          };
-          if (meal.day && dayMap[meal.day] !== undefined) {
-            const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-            let daysToAdd = dayMap[meal.day] - currentDay;
-            if (daysToAdd <= 0) daysToAdd += 7; // If it's in the past, go to next week
-            const mealDate = new Date(today);
-            mealDate.setDate(today.getDate() + daysToAdd);
-            setDate(mealDate);
-          }
-        } catch (error) {
-          console.error("Error setting date from day", error);
-        }
-      } else {
-        toast({
-          title: "Meal not found",
-          description: "We couldn't find the meal you're trying to edit.",
-          variant: "destructive"
-        });
-        navigate('/');
-      }
-    }
-  }, [id, setValue, navigate, toast]);
-  
-  const handleDateChange = (newDate: Date | undefined) => {
-    setDate(newDate);
-    
-    if (newDate) {
-      // Convert date to day of week
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const dayOfWeek = days[newDate.getDay()];
-      setValue('day', dayOfWeek);
-    }
-  };
-  
-  const handleImageUrlChange = (url: string) => {
-    setValue('image', url);
-  };
-  
-  const handleImageError = () => {
-    setValue('image', '');
-  };
-  
-  const onSubmit = async (data: FormValues) => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    
-    try {
-      // Process ingredients - split by newlines and trim whitespace
-      const ingredients = data.ingredients
-        .split('\n')
-        .map(item => item.trim())
-        .filter(item => item !== '');
-      
-      // Update meal in localStorage
-      const storedMeals = localStorage.getItem('forkful_meals');
-      if (storedMeals && id) {
-        const meals = JSON.parse(storedMeals);
-        const updatedMeals = meals.map((meal: any) => {
-          if (meal.id === id) {
-            return {
-              ...meal,
-              title: data.title,
-              mealType: data.mealType,
-              ingredients,
-              sourceUrl: data.sourceUrl,
-              image: data.image,
-              day: data.day,
-              lastUpdated: new Date().toISOString()
-            };
-          }
-          return meal;
-        });
-        
-        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
-      }
-      
-      toast({
-        title: "Changes saved",
-        description: "Your meal has been updated successfully."
-      });
-      
-      // Navigate back to the meal detail
-      navigate(`/meal/${id}`);
-    } catch (error) {
-      console.error("Error updating meal:", error);
-      
-      toast({
-        title: "Error saving changes",
-        description: "An error occurred while saving your changes. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    isLoading,
+    originalMeal,
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    errors,
+    date,
+    handleDateChange,
+    handleImageUrlChange,
+    handleImageError,
+    onSubmit
+  } = useEditMeal(id);
   
   if (!originalMeal) {
-    return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <div className="w-8 h-8 border-4 border-t-primary-coral rounded-full animate-spin"></div>
-      </div>
-    );
+    return <EditMealLoader />;
   }
   
   return (
     <div className="pb-20">
-      <div className="fixed top-0 left-0 right-0 bg-white z-30 flex items-center justify-between px-4 py-3 border-b">
-        <button onClick={() => navigate(`/meal/${id}`)} className="flex items-center">
-          <X className="h-6 w-6" />
-        </button>
-        <h1 className="text-xl font-bold">Edit Meal</h1>
-        <button 
-          onClick={handleSubmit(onSubmit)}
-          disabled={isLoading}
-          className="text-primary-coral hover:text-primary-coral/80 transition-colors"
-        >
-          <Save className="h-6 w-6 text-primary-coral" strokeWidth={2.5} />
-        </button>
-      </div>
+      <EditMealHeader 
+        id={id || ''} 
+        isLoading={isLoading} 
+        onSave={handleSubmit(onSubmit)} 
+      />
       
       <div className="pt-16 px-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-1">Image</label>
-            <div className="mb-4">
-              <RecipeImagePreview 
-                imageUrl={image || ''} 
-                title={watch('title') || 'Recipe'} 
-                onError={handleImageError}
-              />
-            </div>
-            <RecipeUrlInput 
-              onImageUrl={handleImageUrlChange} 
-              initialUrl={image || ''}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Title</label>
-            <Input
-              {...register("title", { required: "Title is required" })}
-              placeholder="Enter meal title"
-              className={errors.title ? "border-red-500" : ""}
-            />
-            {errors.title && (
-              <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>
-            )}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <MealTypeSelector
-              value={mealType || 'Dinner'}
-              onChange={(value) => setValue('mealType', value)}
-            />
-            
-            <DateSelector 
-              date={date}
-              onDateChange={handleDateChange}
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Ingredients (one per line)</label>
-            <Textarea
-              {...register("ingredients")}
-              placeholder="Enter ingredients, one per line"
-              className="min-h-[100px]"
-            />
-            <p className="text-xs text-slate-accent mt-1">Press Enter for a new ingredient</p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Recipe URL (optional)</label>
-            <Input
-              {...register("sourceUrl")}
-              placeholder="https://example.com/recipe"
-            />
-          </div>
+          <EditMealForm
+            register={register}
+            errors={errors}
+            watch={watch}
+            setValue={setValue}
+            date={date}
+            onDateChange={handleDateChange}
+            onImageUrlChange={handleImageUrlChange}
+            onImageError={handleImageError}
+          />
         </form>
       </div>
     </div>

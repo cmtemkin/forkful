@@ -2,83 +2,101 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import MealTypeSelector from '@/components/meal/MealTypeSelector';
-import DateSelector from '@/components/meal/DateSelector';
-import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
+import MealTypeSelector from './MealTypeSelector';
+import RecipeUrlInput from './RecipeUrlInput';
+import RecipeImagePreview from './RecipeImagePreview';
+import DateSelector from './DateSelector';
+import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+
+interface FormValues {
+  title: string;
+  ingredients: string;
+  sourceUrl?: string;
+  image?: string;
+  mealType: string;
+  day: string;
+}
 
 interface EditMealFormProps {
-  editTitle: string;
-  setEditTitle: (title: string) => void;
-  editMealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
-  setEditMealType: (mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks') => void;
-  editDate: Date | undefined;
-  setEditDate: (date: Date | undefined) => void;
-  editIngredients: string;
-  setEditIngredients: (ingredients: string) => void;
-  editImage: string;
-  setEditImage: (image: string) => void;
+  register: UseFormRegister<FormValues>;
+  errors: FieldErrors<FormValues>;
+  watch: UseFormWatch<FormValues>;
+  setValue: UseFormSetValue<FormValues>;
+  date: Date | undefined;
+  onDateChange: (date: Date | undefined) => void;
+  onImageUrlChange: (url: string) => void;
+  onImageError: () => void;
 }
 
 const EditMealForm = ({
-  editTitle,
-  setEditTitle,
-  editMealType,
-  setEditMealType,
-  editDate,
-  setEditDate,
-  editIngredients,
-  setEditIngredients,
-  editImage,
-  setEditImage
+  register,
+  errors,
+  watch,
+  setValue,
+  date,
+  onDateChange,
+  onImageUrlChange,
+  onImageError
 }: EditMealFormProps) => {
-  const handleMealTypeChange = (value: string) => {
-    if (value === 'Breakfast' || value === 'Lunch' || value === 'Dinner' || value === 'Snacks') {
-      setEditMealType(value);
-    }
-  };
+  const image = watch('image');
+  const mealType = watch('mealType');
   
   return (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium mb-1">Meal name</label>
+        <label className="block text-sm font-medium mb-1">Image</label>
+        <div className="mb-4">
+          <RecipeImagePreview 
+            imageUrl={image || ''} 
+            title={watch('title') || 'Recipe'} 
+            onError={onImageError}
+          />
+        </div>
+        <RecipeUrlInput 
+          onImageUrl={onImageUrlChange} 
+          initialUrl={image || ''}
+        />
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium mb-1">Title</label>
         <Input
-          value={editTitle}
-          onChange={(e) => setEditTitle(e.target.value)}
-          placeholder="e.g., Chicken Alfredo"
-          required
+          {...register("title", { required: "Title is required" })}
+          placeholder="Enter meal title"
+          className={errors.title ? "border-red-500" : ""}
+        />
+        {errors.title && (
+          <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <MealTypeSelector
+          value={mealType || 'Dinner'}
+          onChange={(value) => setValue('mealType', value)}
+        />
+        
+        <DateSelector 
+          date={date}
+          onDateChange={onDateChange}
         />
       </div>
       
       <div>
-        <label className="block text-sm font-medium mb-1">Recipe Image</label>
-        <RecipeImagePreview
-          imageUrl={editImage}
-          title={editTitle}
-          onError={() => setEditImage("")}
-          onImageSelected={(file) => {
-            const objectUrl = URL.createObjectURL(file);
-            setEditImage(objectUrl);
-          }}
-        />
-      </div>
-      
-      <MealTypeSelector 
-        value={editMealType} 
-        onChange={handleMealTypeChange} 
-      />
-      
-      <DateSelector 
-        date={editDate} 
-        onDateChange={setEditDate} 
-      />
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Ingredients (separated by commas or new lines)</label>
+        <label className="block text-sm font-medium mb-1">Ingredients (one per line)</label>
         <Textarea
-          value={editIngredients}
-          onChange={(e) => setEditIngredients(e.target.value)}
-          placeholder="List ingredients, separated by commas or new lines"
-          className="min-h-[150px]"
+          {...register("ingredients")}
+          placeholder="Enter ingredients, one per line"
+          className="min-h-[100px]"
+        />
+        <p className="text-xs text-slate-accent mt-1">Press Enter for a new ingredient</p>
+      </div>
+      
+      <div>
+        <label className="block text-sm font-medium mb-1">Recipe URL (optional)</label>
+        <Input
+          {...register("sourceUrl")}
+          placeholder="https://example.com/recipe"
         />
       </div>
     </div>
