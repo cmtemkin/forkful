@@ -112,7 +112,7 @@ const VotingFeed = () => {
   };
 
   return (
-    <div className="pb-20">
+    <div className="pb-20 relative">
       {/* Filter tabs */}
       <div className="px-4 py-2 bg-white border-b">
         <button 
@@ -166,8 +166,8 @@ const VotingFeed = () => {
         )}
       </div>
       
-      {/* Add new idea button - centered at bottom, now using + icon */}
-      <div className="fixed bottom-24 left-0 right-0 flex justify-center z-10">
+      {/* Add new idea button - moved to bottom right */}
+      <div className="fixed bottom-28 right-4 z-10">
         <Link 
           to="/add-meal"
           className="bg-[#FF7A5A] text-white h-12 w-12 rounded-full font-medium flex items-center justify-center shadow-md hover:bg-opacity-90 transition-all duration-200"
