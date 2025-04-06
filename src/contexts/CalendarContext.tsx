@@ -3,7 +3,7 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 import { format, startOfWeek, addDays, addWeeks, isSameDay, isToday } from 'date-fns';
 
 export type MealType = 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
-export type DayString = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
+export type DayString = 'Sun' | 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat';
 export type CalendarViewType = 'weekly' | 'daily' | 'monthly';
 
 export interface Meal {
@@ -98,11 +98,11 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [currentView, setCurrentView] = useState<CalendarViewType>('weekly');
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+    startOfWeek(new Date(), { weekStartsOn: 0 }) // Changed from 1 (Monday) to 0 (Sunday)
   );
   
   const mealTypes: MealType[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
-  const days: DayString[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const days: DayString[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; // Reordered to start with Sunday
   
   const nextWeek = () => {
     setCurrentWeekStart(prev => addWeeks(prev, 1));
@@ -113,14 +113,14 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const getWeekDays = (): Date[] => {
-    // Ensure we generate a full 7-day week including Sunday
+    // Generate a full 7-day week starting from Sunday
     return Array.from({ length: 7 }).map((_, i) => 
       addDays(currentWeekStart, i)
     );
   };
   
   const dayToString = (date: Date): DayString => {
-    const dayIndex = (date.getDay() + 6) % 7; // Convert Sunday (0) to last day
+    const dayIndex = date.getDay(); // Sunday is already 0, so we don't need to adjust
     return days[dayIndex];
   };
   
