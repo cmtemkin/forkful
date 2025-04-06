@@ -10,11 +10,16 @@ interface Meal {
   title: string;
   image_path?: string;
   day: string;
-  meal_type: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
+  meal_type: string;
   ingredients: string[];
   isLocked?: boolean;
   upvotes: number;
   downvotes: number;
+  source_url?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  user_vote?: 'upvote' | 'downvote' | null;
 }
 
 export function useMealDetails(id: string | undefined) {
@@ -46,13 +51,15 @@ export function useMealDetails(id: string | undefined) {
         const fetchedMeal = await getMealById(id);
         
         if (fetchedMeal) {
-          setMeal({
+          const mealWithLockStatus: Meal = {
             ...fetchedMeal,
             isLocked: false // We don't store lock status in DB yet
-          });
+          };
+          
+          setMeal(mealWithLockStatus);
           
           setEditTitle(fetchedMeal.title);
-          setEditMealType(fetchedMeal.meal_type as 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks');
+          setEditMealType(validateMealType(fetchedMeal.meal_type));
           setEditDate(fetchedMeal.day ? parseDayToDate(fetchedMeal.day) : undefined);
           setEditIngredients(fetchedMeal.ingredients ? fetchedMeal.ingredients.join('\n') : '');
           setEditImage(fetchedMeal.image_path || '');
@@ -69,6 +76,14 @@ export function useMealDetails(id: string | undefined) {
     
     fetchMeal();
   }, [id]);
+  
+  // Helper function to validate meal type
+  const validateMealType = (mealType: string): 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks' => {
+    const validTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
+    return validTypes.includes(mealType) 
+      ? mealType as 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks'
+      : 'Dinner'; // Default fallback
+  };
   
   const parseDayToDate = (day: string): Date => {
     const today = new Date();
@@ -90,7 +105,12 @@ export function useMealDetails(id: string | undefined) {
     if (!meal) return;
     
     try {
-      setMeal({ ...meal, isLocked: !meal.isLocked });
+      const updatedMeal = { 
+        ...meal,
+        isLocked: !meal.isLocked
+      };
+      
+      setMeal(updatedMeal);
       
       toast({
         title: meal.isLocked ? "Meal unlocked" : "Meal locked",
@@ -158,6 +178,7 @@ export function useMealDetails(id: string | undefined) {
       
       const result = await updateMeal(id, updatedMeal);
       
+      // Make sure we preserve the lock status that might not be in the database
       setMeal({
         ...result,
         isLocked: meal.isLocked
