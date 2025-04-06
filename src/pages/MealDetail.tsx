@@ -44,11 +44,16 @@ const MealDetail = () => {
   const [meal, setMeal] = useState<any>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
+  const [localUpvotes, setLocalUpvotes] = useState(0);
+  const [localDownvotes, setLocalDownvotes] = useState(0);
   
   useEffect(() => {
     setTimeout(() => {
       setMeal(mockMealData);
       setIsLocked(mockMealData.isLocked);
+      setLocalUpvotes(mockMealData.upvotes);
+      setLocalDownvotes(mockMealData.downvotes);
       setIsLoading(false);
     }, 500);
   }, [id]);
@@ -78,18 +83,68 @@ const MealDetail = () => {
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
-    toast({
-      title: "Upvoted",
-      description: `You upvoted ${meal?.title}`,
-    });
+    
+    // If already upvoted, remove upvote
+    if (userVote === 'up') {
+      setLocalUpvotes(prev => prev - 1);
+      setUserVote(null);
+      toast({
+        title: "Upvote removed",
+        description: `You removed your upvote from ${meal?.title}`,
+      });
+    } 
+    // If previously downvoted, switch to upvote
+    else if (userVote === 'down') {
+      setLocalUpvotes(prev => prev + 1);
+      setLocalDownvotes(prev => prev - 1);
+      setUserVote('up');
+      toast({
+        title: "Changed to upvote",
+        description: `You changed your vote to upvote for ${meal?.title}`,
+      });
+    } 
+    // If no previous vote, add upvote
+    else {
+      setLocalUpvotes(prev => prev + 1);
+      setUserVote('up');
+      toast({
+        title: "Upvoted",
+        description: `You upvoted ${meal?.title}`,
+      });
+    }
   };
   
   const handleDownvote = (e: React.MouseEvent) => {
     e.preventDefault();
-    toast({
-      title: "Downvoted",
-      description: `You downvoted ${meal?.title}`,
-    });
+    
+    // If already downvoted, remove downvote
+    if (userVote === 'down') {
+      setLocalDownvotes(prev => prev - 1);
+      setUserVote(null);
+      toast({
+        title: "Downvote removed",
+        description: `You removed your downvote from ${meal?.title}`,
+      });
+    } 
+    // If previously upvoted, switch to downvote
+    else if (userVote === 'up') {
+      setLocalDownvotes(prev => prev + 1);
+      setLocalUpvotes(prev => prev - 1);
+      setUserVote('down');
+      toast({
+        title: "Changed to downvote",
+        description: `You changed your vote to downvote for ${meal?.title}`,
+      });
+    } 
+    // If no previous vote, add downvote
+    else {
+      setLocalDownvotes(prev => prev + 1);
+      setUserVote('down');
+      toast({
+        title: "Downvoted",
+        description: `You downvoted ${meal?.title}`,
+      });
+    }
   };
   
   if (isLoading) {
@@ -152,21 +207,21 @@ const MealDetail = () => {
         <div className="flex gap-4 mb-8">
           <Button 
             variant="outline" 
-            className="flex-1 upvote border-chow-upvote/20"
+            className={`flex-1 upvote border-chow-upvote/20 ${userVote === 'up' ? 'bg-chow-upvote/30' : ''}`}
             disabled={isLocked}
             onClick={handleUpvote}
           >
             <ThumbsUp className="mr-2 h-5 w-5" />
-            <span>{meal.upvotes}</span>
+            <span>{localUpvotes}</span>
           </Button>
           <Button 
             variant="outline" 
-            className="flex-1 downvote border-chow-downvote/20"
+            className={`flex-1 downvote border-chow-downvote/20 ${userVote === 'down' ? 'bg-chow-downvote/30' : ''}`}
             disabled={isLocked}
             onClick={handleDownvote}
           >
             <ThumbsDown className="mr-2 h-5 w-5" />
-            <span>{meal.downvotes}</span>
+            <span>{localDownvotes}</span>
           </Button>
         </div>
         

@@ -91,13 +91,15 @@ const VotingFeed = () => {
             actionText="Add New Idea"
           />
         )}
-        
-        {/* Add new idea button */}
+      </div>
+      
+      {/* Add new idea button - centered at bottom */}
+      <div className="fixed bottom-24 left-0 right-0 flex justify-center z-10">
         <Link 
           to="/add-meal"
-          className="fixed bottom-24 right-6 z-10 bg-chow-primary text-white w-full max-w-xs mx-auto py-3 rounded-full font-medium flex items-center justify-center"
+          className="bg-chow-primary text-white py-3 px-6 rounded-full font-medium flex items-center justify-center shadow-md"
         >
-          +Add New Idea
+          New Idea
         </Link>
       </div>
     </div>
