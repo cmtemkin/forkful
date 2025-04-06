@@ -26,29 +26,36 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
     throw new Error('User not authenticated');
   }
   
-  // Set household_id to null to avoid any policy recursion issues
+  // Create meal without any household reference
   const mealData = {
     ...meal,
-    household_id: null,  // Force this to null to avoid household policy issues
+    household_id: null,  // Always set to null to avoid any household-related issues
     created_by: userData.user.id
   };
   
-  const { data, error } = await supabase
-    .from('meals')
-    .insert(mealData)
-    .select()
-    .single();
+  console.log('Creating meal with data:', mealData);
+  
+  try {
+    const { data, error } = await supabase
+      .from('meals')
+      .insert(mealData)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating meal:', error);
+    if (error) {
+      console.error('Error creating meal:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Failed to create meal:', error);
     throw error;
   }
-
-  return data;
 };
 
 // Get meals for a household with vote counts
-export const getHouseholdMeals = async (householdId?: string): Promise<Meal[]> => {
+export const getHouseholdMeals = async (): Promise<Meal[]> => {
   // Get user ID for the current user
   const { data: userData } = await supabase.auth.getUser();
   
@@ -56,7 +63,8 @@ export const getHouseholdMeals = async (householdId?: string): Promise<Meal[]> =
   
   const userId = userData.user.id;
 
-  let query = supabase
+  // Get all meals (regardless of household)
+  const { data: meals, error } = await supabase
     .from('meals')
     .select(`
       id,
@@ -70,15 +78,8 @@ export const getHouseholdMeals = async (householdId?: string): Promise<Meal[]> =
       created_by,
       created_at,
       updated_at
-    `);
-
-  if (householdId) {
-    query = query.eq('household_id', householdId);
-  } else {
-    query = query.is('household_id', null);
-  }
-
-  const { data: meals, error } = await query.order('created_at', { ascending: false });
+    `)
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching meals:', error);

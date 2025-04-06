@@ -86,6 +86,15 @@ const AddMeal = () => {
         }
       }
       
+      console.log('Creating meal with data:', {
+        title: title.trim(),
+        ingredients: processedIngredients,
+        image_path: finalImageUrl || null,
+        meal_type: mealType,
+        day: date ? format(date, 'EEEE').substring(0, 3) : 'Mon',
+        household_id: null // Always null to avoid household issues
+      });
+      
       // Create new meal in Supabase
       await createMeal({
         title: title.trim(),
@@ -109,7 +118,7 @@ const AddMeal = () => {
         errorMessage = error.message;
         // If the error is related to household policies, provide a more specific message
         if (errorMessage.includes("household") || errorMessage.includes("policy")) {
-          errorMessage = "There was a policy error. We've made updates to fix this. Please try again.";
+          errorMessage = "There was a policy error with adding the meal. Please try again.";
           setError(errorMessage);
         }
       }
@@ -133,12 +142,12 @@ const AddMeal = () => {
 
   return (
     <div className="pb-20">
-      {/* Header - with reduced padding */}
-      <div className="bg-primary text-white px-4 py-2 flex items-center">
+      {/* Header with intuitive Apple-like styling */}
+      <div className="bg-primary text-white px-4 py-3 flex items-center sticky top-0 z-10 shadow-sm">
         <button onClick={() => navigate(-1)} className="mr-4">
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <h1 className="text-2xl font-bold">Add New Idea</h1>
+        <h1 className="text-xl font-semibold">Add New Idea</h1>
       </div>
       
       {error && (
@@ -168,13 +177,14 @@ const AddMeal = () => {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g., Chicken Alfredo"
             required
+            className="rounded-xl"
           />
         </div>
         
         {/* Image preview */}
         <div>
           <label className="block text-sm font-medium mb-1">Recipe Image</label>
-          <div className="w-full max-h-48 rounded-lg overflow-hidden">
+          <div className="w-full max-h-48 rounded-xl overflow-hidden">
             <RecipeImagePreview 
               imageUrl={imageUrl}
               title={title}
@@ -190,14 +200,14 @@ const AddMeal = () => {
             value={ingredients}
             onChange={(e) => setIngredients(e.target.value)}
             placeholder="List ingredients, separated by commas or new lines"
-            className="min-h-[100px]"
+            className="min-h-[100px] rounded-xl"
           />
-          <p className="text-xs text-slate-accent mt-1">Press Enter or use commas for multiple ingredients</p>
+          <p className="text-xs text-slate-500 mt-1">Press Enter or use commas for multiple ingredients</p>
         </div>
         
         <Button 
           type="submit" 
-          className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full"
+          className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full shadow-md"
           disabled={isSubmitting || isUploading}
         >
           {isSubmitting || isUploading ? "Adding..." : "Add Idea"}
