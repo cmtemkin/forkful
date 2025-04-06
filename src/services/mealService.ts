@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Meal {
@@ -234,11 +233,12 @@ export const updateMeal = async (id: string, updates: Partial<Meal>): Promise<Me
     throw new Error(`Error updating meal: ${error.message}`);
   }
 
-  // Make sure to include default values for upvotes and downvotes
+  // Since the database doesn't store upvotes and downvotes directly on the meals table,
+  // we need to add these properties manually to match the Meal interface
   return {
     ...data,
-    upvotes: data.upvotes || 0,
-    downvotes: data.downvotes || 0
+    upvotes: 0, // Default value since we aren't fetching votes here
+    downvotes: 0 // Default value since we aren't fetching votes here
   };
 };
 
@@ -402,6 +402,10 @@ export const getMealsByDayAndType = async (day: string, mealType: string): Promi
     });
   }
 
-  return meals ? meals.map(meal => ({...meal, upvotes: 0, downvotes: 0})) : [];
+  // If no meals found, return empty array with default vote values
+  return meals ? meals.map(meal => ({
+    ...meal,
+    upvotes: 0,
+    downvotes: 0
+  })) : [];
 };
-
