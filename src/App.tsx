@@ -23,15 +23,15 @@ const App = () => (
       <TooltipProvider>
         <Routes>
           <Route path="/" element={<Layout />}>
-            <Route index element={<Navigate to="/households" replace />} />
-            <Route path="households" element={<Households />} />
-            <Route path="household/:id" element={<HouseholdDetail />} />
+            <Route index element={<Navigate to="/feed" replace />} />
             <Route path="feed" element={<VotingFeed />} />
             <Route path="calendar" element={<CalendarView />} />
             <Route path="add-meal" element={<AddMeal />} />
             <Route path="edit-meal/:id" element={<EditMeal />} />
             <Route path="meal/:id" element={<MealDetail />} />
             <Route path="grocery-list" element={<GroceryList />} />
+            <Route path="households" element={<Households />} />
+            <Route path="household/:id" element={<HouseholdDetail />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

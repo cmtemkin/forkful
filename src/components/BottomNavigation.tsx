@@ -1,18 +1,17 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Utensils, Calendar, Plus, ShoppingBasket } from 'lucide-react';
+import { Utensils, Calendar, Plus, ShoppingBasket, Home } from 'lucide-react';
 
 const BottomNavigation = () => {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="grid grid-cols-4 max-w-lg mx-auto">
+      <div className="grid grid-cols-5 max-w-md mx-auto">
         <NavLink 
-          to="/" 
+          to="/feed" 
           className={({ isActive }) => 
             `bottom-nav-item py-4 ${isActive ? 'text-chow-primary' : 'text-gray-500'}`
           }
-          end
         >
           <Utensils className="bottom-nav-icon" />
           <span>Ideas</span>
@@ -45,6 +44,15 @@ const BottomNavigation = () => {
         >
           <ShoppingBasket className="bottom-nav-icon" />
           <span>Groceries</span>
+        </NavLink>
+        <NavLink 
+          to="/households" 
+          className={({ isActive }) => 
+            `bottom-nav-item py-4 ${isActive ? 'text-chow-primary' : 'text-gray-500'}`
+          }
+        >
+          <Home className="bottom-nav-icon" />
+          <span>Homes</span>
         </NavLink>
       </div>
     </div>
