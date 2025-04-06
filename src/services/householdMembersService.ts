@@ -9,13 +9,13 @@ export const getHouseholdMembers = async (householdId: string): Promise<Househol
     .from('household_members')
     .select(`
       id,
+      household_id,
+      user_id,
       role,
       joined_at,
-      user_id,
       profiles:user_id (
         id,
-        full_name,
-        email,
+        display_name,
         avatar_url
       )
     `)
@@ -29,22 +29,21 @@ export const getHouseholdMembers = async (householdId: string): Promise<Househol
   // Transform the data to match HouseholdMember type
   const members = data.map(member => ({
     id: member.id,
-    userId: member.user_id,
-    role: member.role as 'admin' | 'member',
-    joinedAt: member.joined_at,
+    household_id: member.household_id,
+    user_id: member.user_id,
+    role: member.role,
+    joined_at: member.joined_at,
     profile: {
-      id: member.profiles?.id || '',
-      fullName: member.profiles?.full_name || '',
-      email: member.profiles?.email || '',
-      avatarUrl: member.profiles?.avatar_url || null
+      display_name: member.profiles?.display_name || 'Unknown User',
+      avatar_url: member.profiles?.avatar_url || null
     }
   }));
 
   return members;
 };
 
-// Add a member to a household
-export const inviteMember = async (householdId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<void> => {
+// Add a member to a household (renamed from inviteMember to addHouseholdMember)
+export const addHouseholdMember = async (householdId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<void> => {
   // First, find the user by email
   const { data: userData, error: userError } = await supabase
     .from('profiles')
@@ -89,8 +88,8 @@ export const inviteMember = async (householdId: string, email: string, role: 'ad
   }
 };
 
-// Remove a member from a household
-export const removeMember = async (householdId: string, userId: string): Promise<void> => {
+// Remove a member from a household (renamed to removeHouseholdMember)
+export const removeHouseholdMember = async (householdId: string, userId: string): Promise<void> => {
   const { error } = await supabase
     .from('household_members')
     .delete()

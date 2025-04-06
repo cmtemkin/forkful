@@ -2,7 +2,7 @@
 // Household and member related types
 export interface UserProfile {
   display_name: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
 }
 
 export interface HouseholdMember {
