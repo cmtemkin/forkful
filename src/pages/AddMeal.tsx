@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +17,7 @@ const AddMeal = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryParams = new URLSearchParams(location.search);
   const defaultDay = queryParams.get('day') || '';
@@ -56,7 +57,7 @@ const AddMeal = () => {
       downvotes: 0,
       day: format(date || new Date(), 'EEEE').substring(0, 3) as any, // Convert to 'Mon', 'Tue', etc.
       mealType: mealType,
-      ingredients: ingredients,
+      ingredients: ingredients.split('\n').filter(item => item.trim()),
       dateAdded: new Date().toISOString()
     };
     
@@ -82,6 +83,20 @@ const AddMeal = () => {
     if (data.title && !title) setTitle(data.title);
     if (data.ingredients && !ingredients) setIngredients(data.ingredients);
     if (data.imageUrl) setImageUrl(data.imageUrl);
+  };
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // In a real app, this would upload the file to a server
+      // For now, we'll just create a local URL
+      const objectUrl = URL.createObjectURL(file);
+      setImageUrl(objectUrl);
+    }
   };
   
   return (
@@ -126,11 +141,23 @@ const AddMeal = () => {
         </div>
         
         {/* Image preview if available */}
-        <RecipeImagePreview 
-          imageUrl={imageUrl}
-          title={title}
-          onError={() => setImageUrl("")}
-        />
+        <div onClick={handleImageClick} className="cursor-pointer">
+          <label className="block text-sm font-medium mb-1">Recipe Image (click to change)</label>
+          <div className="w-full max-h-48 rounded-lg overflow-hidden">
+            <RecipeImagePreview 
+              imageUrl={imageUrl}
+              title={title}
+              onError={() => setImageUrl("")}
+            />
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
+        </div>
         
         <div>
           <label className="block text-sm font-medium mb-1">Ingredients</label>
@@ -148,7 +175,7 @@ const AddMeal = () => {
           className="w-full bg-chow-primary hover:bg-chow-primary/90 text-white py-6 rounded-full"
           disabled={isScraping}
         >
-          {isScraping ? <LoadingSpinner /> : "Add to Calendar"}
+          {isScraping ? <LoadingSpinner /> : "Add Idea"}
         </Button>
       </form>
     </div>

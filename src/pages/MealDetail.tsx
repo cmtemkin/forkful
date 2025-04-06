@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2 } from 'lucide-react';
+import { ArrowLeft, ThumbsUp, ThumbsDown, Lock, Unlock, ExternalLink, Trash2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
+import { format, addDays } from 'date-fns';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -17,24 +18,6 @@ import {
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { ImageIcon } from 'lucide-react';
-
-const mockMealData = {
-  id: '1',
-  title: 'Chicken Alfredo',
-  image: 'https://source.unsplash.com/photo-1645112411341-6c4fd023882a',
-  day: 'Monday',
-  mealType: 'Dinner',
-  ingredients: [
-    'Fettucine',
-    'Heavy cream',
-    'Parmesan cheese',
-    'Butter'
-  ],
-  upvotes: 5,
-  downvotes: 0,
-  isLocked: false,
-  sourceUrl: 'https://example.com/chicken-alfredo'
-};
 
 const MealDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,20 +32,91 @@ const MealDetail = () => {
   const [localDownvotes, setLocalDownvotes] = useState(0);
   
   useEffect(() => {
-    setTimeout(() => {
-      setMeal(mockMealData);
-      setIsLocked(mockMealData.isLocked);
-      setLocalUpvotes(mockMealData.upvotes);
-      setLocalDownvotes(mockMealData.downvotes);
-      setIsLoading(false);
-    }, 500);
+    // Get meal from localStorage
+    const storedMeals = localStorage.getItem('chowdown_meals');
+    if (storedMeals) {
+      const allMeals = JSON.parse(storedMeals);
+      const foundMeal = allMeals.find((m: any) => m.id === id);
+      
+      if (foundMeal) {
+        setMeal(foundMeal);
+        setIsLocked(foundMeal.isLocked || false);
+        setLocalUpvotes(foundMeal.upvotes);
+        setLocalDownvotes(foundMeal.downvotes);
+      }
+    }
+    setIsLoading(false);
   }, [id]);
   
   const toggleLock = () => {
     setIsLocked(!isLocked);
+    
+    // Update the meal in localStorage
+    const storedMeals = localStorage.getItem('chowdown_meals');
+    if (storedMeals && meal) {
+      const allMeals = JSON.parse(storedMeals);
+      const updatedMeals = allMeals.map((m: any) => 
+        m.id === id ? { ...m, isLocked: !isLocked } : m
+      );
+      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+    }
+  };
+  
+  const handleAddToGroceries = () => {
+    if (!meal?.ingredients || meal.ingredients.length === 0) {
+      toast({
+        title: "No ingredients",
+        description: "This meal doesn't have any ingredients to add to the grocery list.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Get current grocery list from localStorage or initialize with empty array
+    const existingList = localStorage.getItem('chowdown_groceries');
+    const groceryList = existingList ? JSON.parse(existingList) : [];
+    
+    // Add each ingredient as a separate item if not already in the list
+    const existingItems = new Set(groceryList.map((item: any) => item.name.toLowerCase()));
+    
+    const newItems = meal.ingredients
+      .filter((ingredient: string) => !existingItems.has(ingredient.toLowerCase()))
+      .map((ingredient: string) => ({
+        id: `grocery-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        name: ingredient,
+        checked: false,
+        recipe: meal.title
+      }));
+    
+    if (newItems.length === 0) {
+      toast({
+        title: "Already in list",
+        description: "All ingredients from this recipe are already in your grocery list.",
+      });
+      return;
+    }
+    
+    // Add the new items to the list
+    const updatedList = [...groceryList, ...newItems];
+    
+    // Save to localStorage
+    localStorage.setItem('chowdown_groceries', JSON.stringify(updatedList));
+    
+    toast({
+      title: "Added to grocery list",
+      description: `${newItems.length} ingredients added to your grocery list.`,
+    });
   };
   
   const handleDeleteMeal = () => {
+    // Remove the meal from localStorage
+    const storedMeals = localStorage.getItem('chowdown_meals');
+    if (storedMeals) {
+      const allMeals = JSON.parse(storedMeals);
+      const updatedMeals = allMeals.filter((m: any) => m.id !== id);
+      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+    }
+    
     toast({
       title: "Meal deleted",
       description: "The meal has been successfully deleted.",
@@ -83,11 +137,16 @@ const MealDetail = () => {
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     // If already upvoted, remove upvote
     if (userVote === 'up') {
       setLocalUpvotes(prev => prev - 1);
       setUserVote(null);
+      
+      // Update in localStorage
+      updateVotesInStorage(localUpvotes - 1, localDownvotes);
+      
       toast({
         title: "Upvote removed",
         description: `You removed your upvote from ${meal?.title}`,
@@ -98,6 +157,10 @@ const MealDetail = () => {
       setLocalUpvotes(prev => prev + 1);
       setLocalDownvotes(prev => prev - 1);
       setUserVote('up');
+      
+      // Update in localStorage
+      updateVotesInStorage(localUpvotes + 1, localDownvotes - 1);
+      
       toast({
         title: "Changed to upvote",
         description: `You changed your vote to upvote for ${meal?.title}`,
@@ -107,6 +170,10 @@ const MealDetail = () => {
     else {
       setLocalUpvotes(prev => prev + 1);
       setUserVote('up');
+      
+      // Update in localStorage
+      updateVotesInStorage(localUpvotes + 1, localDownvotes);
+      
       toast({
         title: "Upvoted",
         description: `You upvoted ${meal?.title}`,
@@ -116,11 +183,16 @@ const MealDetail = () => {
   
   const handleDownvote = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     
     // If already downvoted, remove downvote
     if (userVote === 'down') {
       setLocalDownvotes(prev => prev - 1);
       setUserVote(null);
+      
+      // Update in localStorage
+      updateVotesInStorage(localUpvotes, localDownvotes - 1);
+      
       toast({
         title: "Downvote removed",
         description: `You removed your downvote from ${meal?.title}`,
@@ -131,6 +203,10 @@ const MealDetail = () => {
       setLocalDownvotes(prev => prev + 1);
       setLocalUpvotes(prev => prev - 1);
       setUserVote('down');
+      
+      // Update in localStorage
+      updateVotesInStorage(localUpvotes - 1, localDownvotes + 1);
+      
       toast({
         title: "Changed to downvote",
         description: `You changed your vote to downvote for ${meal?.title}`,
@@ -140,11 +216,46 @@ const MealDetail = () => {
     else {
       setLocalDownvotes(prev => prev + 1);
       setUserVote('down');
+      
+      // Update in localStorage
+      updateVotesInStorage(localUpvotes, localDownvotes + 1);
+      
       toast({
         title: "Downvoted",
         description: `You downvoted ${meal?.title}`,
       });
     }
+  };
+  
+  const updateVotesInStorage = (upvotes: number, downvotes: number) => {
+    const storedMeals = localStorage.getItem('chowdown_meals');
+    if (storedMeals && meal) {
+      const allMeals = JSON.parse(storedMeals);
+      const updatedMeals = allMeals.map((m: any) => 
+        m.id === id ? { ...m, upvotes, downvotes } : m
+      );
+      localStorage.setItem('chowdown_meals', JSON.stringify(updatedMeals));
+    }
+  };
+  
+  // Calculate a display date based on the day of the week
+  const getDisplayDate = () => {
+    if (!meal) return "";
+    
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const dayMap: {[key: string]: number} = {
+      'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6, 'Sun': 0
+    };
+    
+    const mealDay = dayMap[meal.day];
+    if (mealDay === undefined) return "";
+    
+    let daysToAdd = mealDay - dayOfWeek;
+    if (daysToAdd < 0) daysToAdd += 7; // If it's in the past, go to next week
+    
+    const mealDate = addDays(today, daysToAdd);
+    return format(mealDate, 'MMM d');
   };
   
   if (isLoading) {
@@ -192,16 +303,24 @@ const MealDetail = () => {
       
       <div className="px-4 py-6">
         <h1 className="text-3xl font-bold mb-2">{meal.title}</h1>
-        <div className="text-gray-600 mb-6">{meal.day} {meal.mealType}</div>
+        <div className="flex items-center text-gray-600 mb-6">
+          <span>{meal.day} {meal.mealType}</span>
+          <span className="mx-2">•</span>
+          <span>{getDisplayDate()}</span>
+        </div>
         
         <h2 className="text-xl font-semibold mb-2">Ingredients</h2>
         <ul className="mb-8">
-          {meal.ingredients.map((ingredient: string, i: number) => (
-            <li key={i} className="flex items-start mb-1">
-              <span className="mr-2">•</span>
-              <span>{ingredient}</span>
-            </li>
-          ))}
+          {meal.ingredients && meal.ingredients.length > 0 ? (
+            meal.ingredients.map((ingredient: string, i: number) => (
+              <li key={i} className="flex items-start mb-1">
+                <span className="mr-2">•</span>
+                <span>{ingredient}</span>
+              </li>
+            ))
+          ) : (
+            <li className="text-gray-500">No ingredients listed</li>
+          )}
         </ul>
         
         <div className="flex gap-4 mb-8">
@@ -242,6 +361,15 @@ const MealDetail = () => {
                 <span>Lock This Meal</span>
               </>
             )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="border-chow-secondary/40 hover:bg-chow-secondary/10 text-chow-secondary"
+            onClick={handleAddToGroceries}
+          >
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            <span>Add to Grocery List</span>
           </Button>
           
           {meal.sourceUrl && (

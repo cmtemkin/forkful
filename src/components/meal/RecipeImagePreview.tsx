@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ImageIcon } from 'lucide-react';
+import { ImageIcon, Camera } from 'lucide-react';
 
 interface RecipeImagePreviewProps {
   imageUrl: string;
@@ -29,28 +29,25 @@ const RecipeImagePreview = ({ imageUrl, title, onError }: RecipeImagePreviewProp
   };
   
   return (
-    <div>
-      <label className="block text-sm font-medium mb-1">Recipe Image</label>
-      <div className="w-full aspect-video max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden">
-        {!imageUrl || hasError ? (
-          <div 
-            className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
-            style={{ backgroundColor: generatePlaceholderColor(title || 'Recipe') }}
-          >
-            <ImageIcon className="h-10 w-10 text-gray-500 mb-2" />
-            <span className="text-sm font-medium text-gray-700 break-words">
-              {title || "Recipe"}
-            </span>
-          </div>
-        ) : (
-          <img 
-            src={imageUrl} 
-            alt={title || "Recipe"} 
-            className="w-full h-full object-cover"
-            onError={handleError}
-          />
-        )}
-      </div>
+    <div className="w-full aspect-video max-w-xs mx-auto bg-gray-100 rounded-md overflow-hidden">
+      {!imageUrl || hasError ? (
+        <div 
+          className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
+          style={{ backgroundColor: generatePlaceholderColor(title || 'Recipe') }}
+        >
+          <Camera className="h-10 w-10 text-gray-500 mb-2" />
+          <span className="text-sm font-medium text-gray-700 break-words">
+            Click to add image
+          </span>
+        </div>
+      ) : (
+        <img 
+          src={imageUrl} 
+          alt={title || "Recipe"} 
+          className="w-full h-full object-cover"
+          onError={handleError}
+        />
+      )}
     </div>
   );
 };
