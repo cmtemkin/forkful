@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ThumbsUp, Utensils } from 'lucide-react';
 import PickMealButton from '../meal/PickMealButton';
+import { motion } from 'framer-motion';
 
 interface MealCardProps {
   id?: string;
@@ -47,14 +48,14 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
           />
         ) : (
           <div className="px-3 py-1">
-            <h3 className="text-gray-800 font-medium text-lg">{title}</h3>
+            <h3 className="text-charcoal-gray font-medium text-lg line-clamp-1">{title}</h3>
           </div>
         )}
         
         {hasImage && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-3">
             <div className="flex justify-between items-center">
-              <h3 className="text-white font-medium text-lg">{title}</h3>
+              <h3 className="text-white font-medium text-lg line-clamp-1">{title}</h3>
               
               <div className="flex items-center space-x-2">
                 {upvotes > 0 && (
@@ -79,7 +80,10 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
   
   return (
     <Link to={`/meal/${id}`} className="block">
-      <div className={`relative w-full ${hasImage ? 'h-24' : 'py-3'} rounded-xl overflow-hidden shadow-sm ${!hasImage ? 'bg-white border border-gray-200' : ''}`}>
+      <motion.div 
+        className={`relative w-full ${hasImage ? 'h-24' : 'py-3'} rounded-xl overflow-hidden shadow-sm ${!hasImage ? 'bg-white border border-gray-200' : ''}`}
+        whileTap={{ scale: 0.98 }}
+      >
         {hasImage ? (
           <img 
             src={image} 
@@ -90,7 +94,7 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
         ) : (
           <div className="px-3 py-1">
             <div className="flex justify-between items-center">
-              <h3 className="text-gray-800 font-medium text-lg">{title}</h3>
+              <h3 className="text-charcoal-gray font-medium text-lg line-clamp-1">{title}</h3>
               
               <div className="flex items-center space-x-2">
                 {upvotes > 0 && (
@@ -108,11 +112,11 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
                     onClick={handleTogglePick}
                     className="p-1"
                   >
-                    <PickMealButton 
-                      isPicked={isPicked} 
-                      onTogglePick={() => {}} 
-                      disabled={true}
-                    />
+                    <div className={`flex items-center justify-center h-7 w-7 rounded-lg ${
+                      isPicked ? 'bg-primary-coral text-white' : 'bg-slate-accent/10 text-slate-accent border border-slate-accent/30'
+                    }`}>
+                      <Utensils className="h-4 w-4" />
+                    </div>
                   </button>
                 )}
               </div>
@@ -123,7 +127,7 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
         {hasImage && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-3">
             <div className="flex justify-between items-center">
-              <h3 className="text-white font-medium text-lg">{title}</h3>
+              <h3 className="text-white font-medium text-lg line-clamp-1">{title}</h3>
               
               <div className="flex items-center space-x-2">
                 {upvotes > 0 && (
@@ -141,10 +145,10 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
                     onClick={handleTogglePick}
                     className="p-1"
                   >
-                    <div className={`flex items-center justify-center h-5 w-5 rounded-full ${
+                    <div className={`flex items-center justify-center h-7 w-7 rounded-lg ${
                       isPicked ? 'bg-primary-coral text-white' : 'bg-white/20 text-white'
                     }`}>
-                      <Utensils className="h-3 w-3" />
+                      <Utensils className="h-4 w-4" />
                     </div>
                   </button>
                 )}
@@ -152,7 +156,7 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </Link>
   );
 };

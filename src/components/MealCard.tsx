@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, ThumbsUp, ThumbsDown, ImageIcon } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Utensils } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PickMealButton from './meal/PickMealButton';
+import { motion } from 'framer-motion';
 
 interface MealCardProps {
   id: string;
@@ -30,13 +31,10 @@ const MealCard = ({
   dayBadge,
   mealTypeBadge
 }: MealCardProps) => {
-  const [imageError, setImageError] = useState(false);
   const [localUpvotes, setLocalUpvotes] = useState(upvotes);
   const [localDownvotes, setLocalDownvotes] = useState(downvotes);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const { toast } = useToast();
-  
-  const hasImage = image && !imageError;
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -114,114 +112,71 @@ const MealCard = ({
     }
   };
   
-  // Compact card without image
-  if (!hasImage) {
-    return (
-      <Link to={`/meal/${id}`} className="block">
-        <div className="meal-card bg-white rounded-xl shadow-sm border border-gray-200 p-3">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold">{title}</h3>
-              <p className="text-sm text-gray-500">{submittedBy}</p>
-              
-              {/* Day and meal type badges */}
-              <div className="flex mt-1 flex-wrap">
-                {dayBadge}
-                {mealTypeBadge}
-              </div>
-            </div>
-            {onTogglePick && (
-              <div onClick={handlePickToggle}>
-                <PickMealButton 
-                  isPicked={isPicked} 
-                  onTogglePick={() => {}}
-                  disabled={true}
-                />
-              </div>
-            )}
-          </div>
-          <div className="flex gap-3 mt-2">
-            <div className="flex items-center">
-              <button 
-                className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-forkful-upvote/30' : ''}`}
-                onClick={handleUpvote}
-              >
-                <ThumbsUp className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-medium">{localUpvotes}</span>
-            </div>
-            <div className="flex items-center">
-              <button 
-                className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-forkful-downvote/30' : ''}`}
-                onClick={handleDownvote}
-              >
-                <ThumbsDown className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-medium">{localDownvotes}</span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    );
-  }
-  
-  // Card with image
   return (
     <Link to={`/meal/${id}`} className="block">
-      <div className="meal-card">
-        <div className="w-20 h-20 rounded-lg overflow-hidden">
-          <img 
-            src={image} 
-            alt={title}
-            className="w-full h-full object-cover"
-            onError={() => setImageError(true)}
-          />
-        </div>
-        
-        <div className="flex-1">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold">{title}</h3>
-              <p className="text-sm text-gray-500">{submittedBy}</p>
+      <motion.div 
+        className="meal-card bg-white rounded-xl shadow-sm border border-slate-accent/10 p-4 mb-4"
+        whileTap={{ scale: 0.98 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="relative">
+          {/* Title and Contributor Area */}
+          <div className="mb-2">
+            <h3 className="text-xl font-bold text-charcoal-gray leading-tight line-clamp-1">{title}</h3>
+            <p className="text-sm text-slate-accent mt-0.5">{submittedBy}</p>
+          </div>
+          
+          {/* Badges Row */}
+          <div className="flex flex-wrap gap-2 mb-3">
+            {dayBadge}
+            {mealTypeBadge}
+          </div>
+          
+          {/* Interactions Area */}
+          <div className="flex justify-between items-center">
+            {/* Voting Controls */}
+            <div className="flex items-center gap-3">
+              <button 
+                className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                  userVote === 'up' ? 'bg-pistachio-green/20' : ''
+                }`}
+                onClick={handleUpvote}
+              >
+                <ThumbsUp className="h-5 w-5 text-pistachio-green" />
+                <span className="text-sm font-medium">{localUpvotes}</span>
+              </button>
               
-              {/* Day and meal type badges */}
-              <div className="flex mt-1 flex-wrap">
-                {dayBadge}
-                {mealTypeBadge}
-              </div>
+              <button 
+                className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                  userVote === 'down' ? 'bg-primary-coral/20' : ''
+                }`}
+                onClick={handleDownvote}
+              >
+                <ThumbsDown className="h-5 w-5 text-primary-coral" />
+                <span className="text-sm font-medium">{localDownvotes}</span>
+              </button>
             </div>
+            
+            {/* Pick Button */}
             {onTogglePick && (
-              <div onClick={handlePickToggle}>
-                <PickMealButton 
-                  isPicked={isPicked} 
-                  onTogglePick={() => {}}
-                  disabled={true}
-                />
+              <div 
+                className="absolute bottom-0 right-0" 
+                onClick={handlePickToggle}
+              >
+                <div className="w-12 h-12 flex items-center justify-center">
+                  <PickMealButton 
+                    isPicked={isPicked} 
+                    onTogglePick={() => {}} 
+                    disabled={true}
+                  />
+                </div>
               </div>
             )}
           </div>
-          <div className="flex gap-3 mt-2">
-            <div className="flex items-center">
-              <button 
-                className={`vote-button upvote mr-1 ${userVote === 'up' ? 'bg-forkful-upvote/30' : ''}`}
-                onClick={handleUpvote}
-              >
-                <ThumbsUp className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-medium">{localUpvotes}</span>
-            </div>
-            <div className="flex items-center">
-              <button 
-                className={`vote-button downvote mr-1 ${userVote === 'down' ? 'bg-forkful-downvote/30' : ''}`}
-                onClick={handleDownvote}
-              >
-                <ThumbsDown className="h-4 w-4" />
-              </button>
-              <span className="text-sm font-medium">{localDownvotes}</span>
-            </div>
-          </div>
         </div>
-      </div>
+      </motion.div>
     </Link>
   );
 };

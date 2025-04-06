@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Calendar, Check } from 'lucide-react';
+import { Utensils, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,28 +60,30 @@ const PickMealButton = ({ isPicked, onTogglePick, disabled = false }: PickMealBu
 
   return (
     <div className="relative">
-      <button
+      <motion.button
         onClick={handleToggle}
         disabled={disabled}
         aria-label={isPicked ? "Unpick this meal" : "Pick this meal"}
-        className={`flex items-center justify-center h-10 w-10 rounded-full transition-all ${
+        className={`flex items-center justify-center h-12 w-12 rounded-xl transition-all ${
           isPicked 
             ? 'bg-primary-coral text-white shadow-md' 
-            : 'bg-transparent text-slate-accent border border-slate-accent/50'
+            : 'bg-slate-accent/10 text-slate-accent border border-slate-accent/30'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
+        whileHover={{ scale: disabled ? 1 : 1.05 }}
+        whileTap={{ scale: disabled ? 1 : 0.95 }}
       >
         {isPicked ? (
           <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0.8, rotate: -10 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 15 }}
           >
-            <Check className="h-5 w-5" />
+            <Utensils className="h-6 w-6" />
           </motion.div>
         ) : (
-          <Calendar className="h-5 w-5" />
+          <Utensils className="h-6 w-6" />
         )}
-      </button>
+      </motion.button>
       
       <AnimatePresence>
         {showMessage && (
