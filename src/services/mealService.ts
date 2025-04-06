@@ -80,49 +80,49 @@ export const getHouseholdMeals = async (householdId?: string): Promise<Meal[]> =
     throw error;
   }
 
-  // Get votes for these meals
-  if (meals && meals.length > 0) {
-    const mealIds = meals.map(meal => meal.id);
-    
-    // Get upvotes
-    const { data: upvotes, error: upvotesError } = await supabase
-      .from('meal_votes')
-      .select('meal_id, count')
-      .in('meal_id', mealIds)
-      .eq('vote_type', 'upvote')
-      .count();
-      
-    // Get downvotes
-    const { data: downvotes, error: downvotesError } = await supabase
-      .from('meal_votes')
-      .select('meal_id, count')
-      .in('meal_id', mealIds)
-      .eq('vote_type', 'downvote')
-      .count();
-      
-    // Get user's votes
-    const { data: userVotes, error: userVotesError } = await supabase
-      .from('meal_votes')
-      .select('meal_id, vote_type')
-      .in('meal_id', mealIds)
-      .eq('user_id', userId);
-
-    // Process the data to format vote counts
-    return meals.map(meal => {
-      const mealUpvotes = upvotes?.find(uv => uv.meal_id === meal.id)?.count || 0;
-      const mealDownvotes = downvotes?.find(dv => dv.meal_id === meal.id)?.count || 0;
-      const userVote = userVotes?.find(uv => uv.meal_id === meal.id)?.vote_type || null;
-      
-      return {
-        ...meal,
-        upvotes: mealUpvotes,
-        downvotes: mealDownvotes,
-        user_vote: userVote as 'upvote' | 'downvote' | null
-      };
-    });
+  // If no meals were found, return an empty array
+  if (!meals || meals.length === 0) {
+    return [];
   }
 
-  return meals || [];
+  // Get votes for these meals
+  const mealIds = meals.map(meal => meal.id);
+  
+  // Get upvotes - we need to manually count them
+  const { data: upvotesData, error: upvotesError } = await supabase
+    .from('meal_votes')
+    .select('meal_id')
+    .in('meal_id', mealIds)
+    .eq('vote_type', 'upvote');
+    
+  // Get downvotes - we need to manually count them
+  const { data: downvotesData, error: downvotesError } = await supabase
+    .from('meal_votes')
+    .select('meal_id')
+    .in('meal_id', mealIds)
+    .eq('vote_type', 'downvote');
+    
+  // Get user's votes
+  const { data: userVotes, error: userVotesError } = await supabase
+    .from('meal_votes')
+    .select('meal_id, vote_type')
+    .in('meal_id', mealIds)
+    .eq('user_id', userId);
+
+  // Process the data to format vote counts
+  return meals.map(meal => {
+    // Count upvotes and downvotes manually
+    const mealUpvotes = upvotesData ? upvotesData.filter(vote => vote.meal_id === meal.id).length : 0;
+    const mealDownvotes = downvotesData ? downvotesData.filter(vote => vote.meal_id === meal.id).length : 0;
+    const userVote = userVotes?.find(uv => uv.meal_id === meal.id)?.vote_type || null;
+    
+    return {
+      ...meal,
+      upvotes: mealUpvotes,
+      downvotes: mealDownvotes,
+      user_vote: userVote as 'upvote' | 'downvote' | null
+    };
+  });
 };
 
 // Get a single meal by ID with vote counts
@@ -157,20 +157,19 @@ export const getMealById = async (id: string): Promise<Meal> => {
     throw error;
   }
 
-  // Get vote counts
+  // Get upvotes count manually
   const { data: upvotes, error: upvotesError } = await supabase
     .from('meal_votes')
-    .select('count')
+    .select('id')
     .eq('meal_id', id)
-    .eq('vote_type', 'upvote')
-    .count();
+    .eq('vote_type', 'upvote');
     
+  // Get downvotes count manually
   const { data: downvotes, error: downvotesError } = await supabase
     .from('meal_votes')
-    .select('count')
+    .select('id')
     .eq('meal_id', id)
-    .eq('vote_type', 'downvote')
-    .count();
+    .eq('vote_type', 'downvote');
     
   // Get user vote
   const { data: userVote, error: userVoteError } = await supabase
@@ -316,26 +315,25 @@ export const getMealsByDayAndType = async (day: string, mealType: string): Promi
   if (meals && meals.length > 0) {
     const mealIds = meals.map(meal => meal.id);
     
-    // Get upvotes
-    const { data: upvotes, error: upvotesError } = await supabase
+    // Get upvotes - we need to manually count them
+    const { data: upvotesData, error: upvotesError } = await supabase
       .from('meal_votes')
-      .select('meal_id, count')
+      .select('meal_id')
       .in('meal_id', mealIds)
-      .eq('vote_type', 'upvote')
-      .count();
+      .eq('vote_type', 'upvote');
       
-    // Get downvotes
-    const { data: downvotes, error: downvotesError } = await supabase
+    // Get downvotes - we need to manually count them
+    const { data: downvotesData, error: downvotesError } = await supabase
       .from('meal_votes')
-      .select('meal_id, count')
+      .select('meal_id')
       .in('meal_id', mealIds)
-      .eq('vote_type', 'downvote')
-      .count();
+      .eq('vote_type', 'downvote');
 
     // Process the data to format vote counts
     return meals.map(meal => {
-      const mealUpvotes = upvotes?.find(uv => uv.meal_id === meal.id)?.count || 0;
-      const mealDownvotes = downvotes?.find(dv => dv.meal_id === meal.id)?.count || 0;
+      // Count upvotes and downvotes manually
+      const mealUpvotes = upvotesData ? upvotesData.filter(vote => vote.meal_id === meal.id).length : 0;
+      const mealDownvotes = downvotesData ? downvotesData.filter(vote => vote.meal_id === meal.id).length : 0;
       
       return {
         ...meal,
