@@ -19,9 +19,18 @@ export interface Meal {
 
 // Create a new meal
 export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated_at' | 'created_by'>): Promise<Meal> => {
+  const { data: userData } = await supabase.auth.getUser();
+  
+  if (!userData.user) {
+    throw new Error('User not authenticated');
+  }
+  
   const { data, error } = await supabase
     .from('meals')
-    .insert(meal)
+    .insert({
+      ...meal,
+      created_by: userData.user.id
+    })
     .select()
     .single();
 
@@ -36,17 +45,26 @@ export const createMeal = async (meal: Omit<Meal, 'id' | 'created_at' | 'updated
 // Get meals for a household with vote counts
 export const getHouseholdMeals = async (householdId?: string): Promise<Meal[]> => {
   // Get user ID for the current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
   
-  if (!user) throw new Error('User not authenticated');
+  if (!userData.user) throw new Error('User not authenticated');
+  
+  const userId = userData.user.id;
 
   let query = supabase
     .from('meals')
     .select(`
-      *,
-      upvotes:meal_votes(count).filter(vote_type.eq.upvote),
-      downvotes:meal_votes(count).filter(vote_type.eq.downvote),
-      user_vote:meal_votes!inner(vote_type).filter(user_id.eq.${user.id})
+      id,
+      title,
+      ingredients,
+      image_path,
+      source_url,
+      meal_type,
+      day,
+      household_id,
+      created_by,
+      created_at,
+      updated_at
     `);
 
   if (householdId) {
@@ -55,36 +73,81 @@ export const getHouseholdMeals = async (householdId?: string): Promise<Meal[]> =
     query = query.is('household_id', null);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data: meals, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error('Error fetching meals:', error);
     throw error;
   }
 
-  // Process the data to format vote counts
-  return (data || []).map(meal => ({
-    ...meal,
-    upvotes: meal.upvotes?.[0]?.count || 0,
-    downvotes: meal.downvotes?.[0]?.count || 0,
-    user_vote: meal.user_vote?.[0]?.vote_type || null
-  }));
+  // Get votes for these meals
+  if (meals && meals.length > 0) {
+    const mealIds = meals.map(meal => meal.id);
+    
+    // Get upvotes
+    const { data: upvotes, error: upvotesError } = await supabase
+      .from('meal_votes')
+      .select('meal_id, count')
+      .in('meal_id', mealIds)
+      .eq('vote_type', 'upvote')
+      .count();
+      
+    // Get downvotes
+    const { data: downvotes, error: downvotesError } = await supabase
+      .from('meal_votes')
+      .select('meal_id, count')
+      .in('meal_id', mealIds)
+      .eq('vote_type', 'downvote')
+      .count();
+      
+    // Get user's votes
+    const { data: userVotes, error: userVotesError } = await supabase
+      .from('meal_votes')
+      .select('meal_id, vote_type')
+      .in('meal_id', mealIds)
+      .eq('user_id', userId);
+
+    // Process the data to format vote counts
+    return meals.map(meal => {
+      const mealUpvotes = upvotes?.find(uv => uv.meal_id === meal.id)?.count || 0;
+      const mealDownvotes = downvotes?.find(dv => dv.meal_id === meal.id)?.count || 0;
+      const userVote = userVotes?.find(uv => uv.meal_id === meal.id)?.vote_type || null;
+      
+      return {
+        ...meal,
+        upvotes: mealUpvotes,
+        downvotes: mealDownvotes,
+        user_vote: userVote as 'upvote' | 'downvote' | null
+      };
+    });
+  }
+
+  return meals || [];
 };
 
 // Get a single meal by ID with vote counts
 export const getMealById = async (id: string): Promise<Meal> => {
   // Get user ID for the current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
   
-  if (!user) throw new Error('User not authenticated');
+  if (!userData.user) throw new Error('User not authenticated');
+  
+  const userId = userData.user.id;
 
-  const { data, error } = await supabase
+  const { data: meal, error } = await supabase
     .from('meals')
     .select(`
-      *,
-      upvotes:meal_votes(count).filter(vote_type.eq.upvote),
-      downvotes:meal_votes(count).filter(vote_type.eq.downvote),
-      user_vote:meal_votes!inner(vote_type).filter(user_id.eq.${user.id})
+      id,
+      title,
+      ingredients,
+      image_path,
+      source_url,
+      meal_type,
+      day,
+      household_id,
+      created_by,
+      created_at,
+      updated_at
     `)
     .eq('id', id)
     .single();
@@ -94,11 +157,34 @@ export const getMealById = async (id: string): Promise<Meal> => {
     throw error;
   }
 
+  // Get vote counts
+  const { data: upvotes, error: upvotesError } = await supabase
+    .from('meal_votes')
+    .select('count')
+    .eq('meal_id', id)
+    .eq('vote_type', 'upvote')
+    .count();
+    
+  const { data: downvotes, error: downvotesError } = await supabase
+    .from('meal_votes')
+    .select('count')
+    .eq('meal_id', id)
+    .eq('vote_type', 'downvote')
+    .count();
+    
+  // Get user vote
+  const { data: userVote, error: userVoteError } = await supabase
+    .from('meal_votes')
+    .select('vote_type')
+    .eq('meal_id', id)
+    .eq('user_id', userId)
+    .maybeSingle();
+
   return {
-    ...data,
-    upvotes: data.upvotes?.[0]?.count || 0,
-    downvotes: data.downvotes?.[0]?.count || 0,
-    user_vote: data.user_vote?.[0]?.vote_type || null
+    ...meal,
+    upvotes: upvotes?.length || 0,
+    downvotes: downvotes?.length || 0,
+    user_vote: userVote?.vote_type as 'upvote' | 'downvote' | null || null
   };
 };
 
@@ -134,11 +220,18 @@ export const deleteMeal = async (id: string): Promise<void> => {
 
 // Vote on a meal
 export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'): Promise<void> => {
+  const { data: userData } = await supabase.auth.getUser();
+  
+  if (!userData.user) throw new Error('User not authenticated');
+  
+  const userId = userData.user.id;
+  
   const { data: existingVote, error: checkError } = await supabase
     .from('meal_votes')
-    .select('*')
+    .select('id, vote_type')
     .eq('meal_id', mealId)
-    .single();
+    .eq('user_id', userId)
+    .maybeSingle();
   
   if (checkError && checkError.code !== 'PGRST116') {
     console.error('Error checking existing vote:', checkError);
@@ -162,6 +255,7 @@ export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'):
       .from('meal_votes')
       .insert({
         meal_id: mealId,
+        user_id: userId,
         vote_type: voteType
       });
 
@@ -174,10 +268,17 @@ export const voteMeal = async (mealId: string, voteType: 'upvote' | 'downvote'):
 
 // Remove a vote
 export const removeVote = async (mealId: string): Promise<void> => {
+  const { data: userData } = await supabase.auth.getUser();
+  
+  if (!userData.user) throw new Error('User not authenticated');
+  
+  const userId = userData.user.id;
+  
   const { error } = await supabase
     .from('meal_votes')
     .delete()
-    .eq('meal_id', mealId);
+    .eq('meal_id', mealId)
+    .eq('user_id', userId);
 
   if (error) {
     console.error('Error removing vote:', error);
@@ -187,12 +288,20 @@ export const removeVote = async (mealId: string): Promise<void> => {
 
 // Get meals by day and meal type
 export const getMealsByDayAndType = async (day: string, mealType: string): Promise<Meal[]> => {
-  const { data, error } = await supabase
+  const { data: meals, error } = await supabase
     .from('meals')
     .select(`
-      *,
-      upvotes:meal_votes(count).filter(vote_type.eq.upvote),
-      downvotes:meal_votes(count).filter(vote_type.eq.downvote)
+      id,
+      title,
+      ingredients,
+      image_path,
+      source_url,
+      meal_type,
+      day,
+      household_id,
+      created_by,
+      created_at,
+      updated_at
     `)
     .eq('day', day)
     .eq('meal_type', mealType)
@@ -202,10 +311,39 @@ export const getMealsByDayAndType = async (day: string, mealType: string): Promi
     console.error('Error fetching meals by day and type:', error);
     throw error;
   }
+  
+  // Get vote counts for each meal
+  if (meals && meals.length > 0) {
+    const mealIds = meals.map(meal => meal.id);
+    
+    // Get upvotes
+    const { data: upvotes, error: upvotesError } = await supabase
+      .from('meal_votes')
+      .select('meal_id, count')
+      .in('meal_id', mealIds)
+      .eq('vote_type', 'upvote')
+      .count();
+      
+    // Get downvotes
+    const { data: downvotes, error: downvotesError } = await supabase
+      .from('meal_votes')
+      .select('meal_id, count')
+      .in('meal_id', mealIds)
+      .eq('vote_type', 'downvote')
+      .count();
 
-  return (data || []).map(meal => ({
-    ...meal,
-    upvotes: meal.upvotes?.[0]?.count || 0,
-    downvotes: meal.downvotes?.[0]?.count || 0
-  }));
+    // Process the data to format vote counts
+    return meals.map(meal => {
+      const mealUpvotes = upvotes?.find(uv => uv.meal_id === meal.id)?.count || 0;
+      const mealDownvotes = downvotes?.find(dv => dv.meal_id === meal.id)?.count || 0;
+      
+      return {
+        ...meal,
+        upvotes: mealUpvotes,
+        downvotes: mealDownvotes
+      };
+    });
+  }
+
+  return meals || [];
 };
