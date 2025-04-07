@@ -12,7 +12,9 @@ import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'rea
 interface FormValues {
   title: string;
   ingredients: string;
+  instructions?: string;
   sourceUrl?: string;
+  sourceDomain?: string;
   image?: string;
   mealType: string;
   day: string;
@@ -40,6 +42,8 @@ interface EditMealFormPropsWithState {
   setEditDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
   editIngredients: string;
   setEditIngredients: React.Dispatch<React.SetStateAction<string>>;
+  editInstructions?: string;
+  setEditInstructions?: React.Dispatch<React.SetStateAction<string>>;
   editImage: string;
   setEditImage: React.Dispatch<React.SetStateAction<string>>;
 }
@@ -67,6 +71,16 @@ const EditMealForm = (props: EditMealFormProps) => {
     const image = watch('image');
     const mealType = watch('mealType');
     
+    // Handle scraped data from recipe URL
+    const handleScrapedData = (data: any) => {
+      if (data.title) setValue('title', data.title);
+      if (data.ingredients) setValue('ingredients', data.ingredients);
+      if (data.instructions) setValue('instructions', data.instructions.join('\n'));
+      if (data.imageUrl) setValue('image', data.imageUrl);
+      if (data.sourceUrl) setValue('sourceUrl', data.sourceUrl);
+      if (data.sourceDomain) setValue('sourceDomain', data.sourceDomain);
+    };
+    
     return (
       <div className="space-y-6">
         <div>
@@ -80,7 +94,8 @@ const EditMealForm = (props: EditMealFormProps) => {
           </div>
           <RecipeUrlInput 
             onImageUrl={onImageUrlChange} 
-            initialUrl={image || ''}
+            initialUrl={watch('sourceUrl') || ''}
+            onScrapedData={handleScrapedData}
           />
         </div>
         
@@ -119,6 +134,16 @@ const EditMealForm = (props: EditMealFormProps) => {
         </div>
         
         <div>
+          <label className="block text-sm font-medium mb-1">Instructions (optional)</label>
+          <Textarea
+            {...register("instructions")}
+            placeholder="Enter cooking instructions, one step per line"
+            className="min-h-[150px]"
+          />
+          <p className="text-xs text-slate-accent mt-1">Press Enter for a new step</p>
+        </div>
+        
+        <div>
           <label className="block text-sm font-medium mb-1">Recipe URL (optional)</label>
           <Input
             {...register("sourceUrl")}
@@ -138,6 +163,8 @@ const EditMealForm = (props: EditMealFormProps) => {
       setEditDate,
       editIngredients,
       setEditIngredients,
+      editInstructions = '',
+      setEditInstructions,
       editImage,
       setEditImage
     } = props;
@@ -148,6 +175,14 @@ const EditMealForm = (props: EditMealFormProps) => {
     
     const handleImageUrlChange = (url: string) => {
       setEditImage(url);
+    };
+    
+    const handleScrapedData = (data: any) => {
+      if (data.title) setEditTitle(data.title);
+      if (data.ingredients) setEditIngredients(data.ingredients);
+      if (data.instructions && setEditInstructions) 
+        setEditInstructions(data.instructions.join('\n'));
+      if (data.imageUrl) setEditImage(data.imageUrl);
     };
     
     return (
@@ -164,6 +199,7 @@ const EditMealForm = (props: EditMealFormProps) => {
           <RecipeUrlInput 
             onImageUrl={handleImageUrlChange} 
             initialUrl={editImage || ''}
+            onScrapedData={handleScrapedData}
           />
         </div>
         
@@ -199,6 +235,19 @@ const EditMealForm = (props: EditMealFormProps) => {
           />
           <p className="text-xs text-slate-accent mt-1">Press Enter for a new ingredient</p>
         </div>
+        
+        {setEditInstructions && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Instructions (optional)</label>
+            <Textarea
+              value={editInstructions}
+              onChange={(e) => setEditInstructions(e.target.value)}
+              placeholder="Enter cooking instructions, one step per line"
+              className="min-h-[150px]"
+            />
+            <p className="text-xs text-slate-accent mt-1">Press Enter for a new step</p>
+          </div>
+        )}
       </div>
     );
   }

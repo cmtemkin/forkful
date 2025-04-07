@@ -9,7 +9,15 @@ export interface RecipeUrlInputProps {
   onImageUrl?: (url: string) => void;
   onRecipeUrl?: (url: string) => void;
   disabled?: boolean;
-  onScrapedData?: (data: { title?: string; ingredients?: string; imageUrl?: string }) => void;
+  onScrapedData?: (data: { 
+    title?: string; 
+    ingredients?: string; 
+    instructions?: string[];
+    imageUrl?: string;
+    sourceUrl?: string;
+    sourceDomain?: string;
+    metadata?: Record<string, any>;
+  }) => void;
 }
 
 const RecipeUrlInput = ({ 
@@ -23,6 +31,15 @@ const RecipeUrlInput = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  const extractDomain = (url: string): string => {
+    try {
+      const domainMatch = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n?]+)/im);
+      return domainMatch ? domainMatch[1] : '';
+    } catch (err) {
+      return '';
+    }
+  };
+  
   const handleImport = async () => {
     if (!url) {
       setError('Please enter a URL');
@@ -33,8 +50,33 @@ const RecipeUrlInput = ({
     setError(null);
     
     try {
-      // Here would typically be API call to extract recipe
-      // For now, we'll simulate a success
+      // In the future, this would call the external service API
+      // For now, we'll simulate a success with mock data
+      
+      const sourceDomain = extractDomain(url);
+      
+      // Mock response data format that would come from the API
+      const mockResponseData = {
+        title: "Example Recipe",
+        image_url: 'https://source.unsplash.com/random/300x200/?food',
+        ingredients: [
+          "Ingredient 1",
+          "Ingredient 2",
+          "Ingredient 3"
+        ],
+        instructions: [
+          "Step 1: Do something",
+          "Step 2: Do something else",
+          "Step 3: Finish cooking"
+        ],
+        source_url: url,
+        domain: sourceDomain,
+        metadata: {
+          import_method: "mock_data",
+          tags: ["example", "mock"],
+          prep_time: "10 minutes"
+        }
+      };
       
       // If recipe extraction successful
       if (onRecipeUrl) {
@@ -42,17 +84,20 @@ const RecipeUrlInput = ({
       }
       
       // If image URL extraction successful
-      if (onImageUrl) {
-        // For demo, we'll just use a placeholder image
-        onImageUrl('https://source.unsplash.com/random/300x200/?food');
+      if (onImageUrl && mockResponseData.image_url) {
+        onImageUrl(mockResponseData.image_url);
       }
       
       // If we need to pass extracted data back
       if (onScrapedData) {
         onScrapedData({
-          title: "Example Recipe",
-          ingredients: "Ingredient 1\nIngredient 2\nIngredient 3",
-          imageUrl: 'https://source.unsplash.com/random/300x200/?food'
+          title: mockResponseData.title,
+          ingredients: mockResponseData.ingredients.join('\n'),
+          instructions: mockResponseData.instructions,
+          imageUrl: mockResponseData.image_url,
+          sourceUrl: mockResponseData.source_url,
+          sourceDomain: mockResponseData.domain,
+          metadata: mockResponseData.metadata
         });
       }
       

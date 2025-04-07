@@ -7,7 +7,9 @@ import { useForm } from 'react-hook-form';
 interface FormValues {
   title: string;
   ingredients: string;
+  instructions?: string;
   sourceUrl?: string;
+  sourceDomain?: string;
   image?: string;
   mealType: string;
   day: string;
@@ -34,7 +36,14 @@ export const useEditMeal = (id: string | undefined) => {
         setValue('title', meal.title);
         setValue('mealType', meal.mealType);
         setValue('ingredients', Array.isArray(meal.ingredients) ? meal.ingredients.join('\n') : '');
+        
+        // Handle instructions if available (new field)
+        if (Array.isArray(meal.instructions)) {
+          setValue('instructions', meal.instructions.join('\n'));
+        }
+        
         setValue('sourceUrl', meal.sourceUrl || '');
+        setValue('sourceDomain', meal.sourceDomain || '');
         setValue('image', meal.image || '');
         setValue('day', meal.day || 'Monday');
         
@@ -97,6 +106,14 @@ export const useEditMeal = (id: string | undefined) => {
         .map(item => item.trim())
         .filter(item => item !== '');
       
+      // Process instructions if available
+      const instructions = data.instructions
+        ? data.instructions
+            .split('\n')
+            .map(item => item.trim())
+            .filter(item => item !== '')
+        : [];
+      
       // Update meal in localStorage
       const storedMeals = localStorage.getItem('forkful_meals');
       if (storedMeals && id) {
@@ -108,7 +125,9 @@ export const useEditMeal = (id: string | undefined) => {
               title: data.title,
               mealType: data.mealType,
               ingredients,
+              instructions, // New field
               sourceUrl: data.sourceUrl,
+              sourceDomain: data.sourceDomain,
               image: data.image,
               day: data.day,
               lastUpdated: new Date().toISOString()

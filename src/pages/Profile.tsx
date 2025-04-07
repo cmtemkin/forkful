@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -9,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: "Display name must be at least 2 characters" }),
@@ -99,7 +98,6 @@ const Profile = () => {
         throw error;
       }
 
-      // Update local profile state
       setProfile(prev => prev ? {
         ...prev,
         display_name: values.displayName,
@@ -107,7 +105,6 @@ const Profile = () => {
         last_name: values.lastName
       } : null);
       
-      // Update the auth context so profile menu and other components can access updated data
       setUserProfileData({
         firstName: values.firstName,
         lastName: values.lastName,

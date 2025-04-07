@@ -101,9 +101,13 @@ export type Database = {
           day: string
           household_id: string | null
           id: string
-          image_path: string | null
+          image_url: string | null
+          import_method: string | null
           ingredients: string[]
+          instructions: string[] | null
           meal_type: string
+          metadata: Json | null
+          source_domain: string | null
           source_url: string | null
           title: string
           updated_at: string
@@ -114,9 +118,13 @@ export type Database = {
           day: string
           household_id?: string | null
           id?: string
-          image_path?: string | null
+          image_url?: string | null
+          import_method?: string | null
           ingredients: string[]
+          instructions?: string[] | null
           meal_type: string
+          metadata?: Json | null
+          source_domain?: string | null
           source_url?: string | null
           title: string
           updated_at?: string
@@ -127,9 +135,13 @@ export type Database = {
           day?: string
           household_id?: string | null
           id?: string
-          image_path?: string | null
+          image_url?: string | null
+          import_method?: string | null
           ingredients?: string[]
+          instructions?: string[] | null
           meal_type?: string
+          metadata?: Json | null
+          source_domain?: string | null
           source_url?: string | null
           title?: string
           updated_at?: string
