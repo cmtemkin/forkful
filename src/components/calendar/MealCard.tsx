@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ThumbsUp, Utensils } from 'lucide-react';
 import PickMealButton from '../meal/PickMealButton';
 import { motion } from 'framer-motion';
+import { useCalendar } from '@/contexts/CalendarContext';
 
 interface MealCardProps {
   id?: string;
@@ -16,6 +17,7 @@ interface MealCardProps {
 
 const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }: MealCardProps) => {
   const [imageError, setImageError] = useState(false);
+  const { toggleMealPicked } = useCalendar();
   
   const handleUpvote = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,6 +31,10 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
       e.preventDefault();
       e.stopPropagation();
       onTogglePick();
+    } else if (e && id) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMealPicked(id);
     }
   };
   
@@ -107,18 +113,17 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
                   </button>
                 )}
                 
-                {onTogglePick && (
-                  <button 
-                    onClick={handleTogglePick}
-                    className="p-1"
-                  >
-                    <div className={`flex items-center justify-center h-7 w-7 rounded-lg ${
-                      isPicked ? 'bg-primary-coral text-white' : 'bg-slate-accent/10 text-slate-accent border border-slate-accent/30'
-                    }`}>
-                      <Utensils className="h-4 w-4" />
-                    </div>
-                  </button>
-                )}
+                {/* Show pick button regardless of picked status to allow toggling */}
+                <button 
+                  onClick={handleTogglePick}
+                  className="p-1"
+                >
+                  <div className={`flex items-center justify-center h-7 w-7 rounded-lg ${
+                    isPicked ? 'bg-primary-coral text-white' : 'bg-slate-accent/10 text-slate-accent border border-slate-accent/30'
+                  }`}>
+                    <Utensils className="h-4 w-4" />
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -140,18 +145,17 @@ const MealCard = ({ id, title, image, upvotes, isPicked = false, onTogglePick }:
                   </button>
                 )}
                 
-                {onTogglePick && (
-                  <button 
-                    onClick={handleTogglePick}
-                    className="p-1"
-                  >
-                    <div className={`flex items-center justify-center h-7 w-7 rounded-lg ${
-                      isPicked ? 'bg-primary-coral text-white' : 'bg-white/20 text-white'
-                    }`}>
-                      <Utensils className="h-4 w-4" />
-                    </div>
-                  </button>
-                )}
+                {/* Show pick button regardless of picked status to allow toggling */}
+                <button 
+                  onClick={handleTogglePick}
+                  className="p-1"
+                >
+                  <div className={`flex items-center justify-center h-7 w-7 rounded-lg ${
+                    isPicked ? 'bg-primary-coral text-white' : 'bg-white/20 text-white'
+                  }`}>
+                    <Utensils className="h-4 w-4" />
+                  </div>
+                </button>
               </div>
             </div>
           </div>

@@ -11,7 +11,8 @@ const WeeklyView = () => {
     setCurrentDate, 
     mealTypes, 
     getWeekDays, 
-    getMealsByType 
+    getMealsByType,
+    toggleMealPicked
   } = useCalendar();
   
   const weekDays = getWeekDays();
@@ -85,6 +86,7 @@ const WeeklyView = () => {
                   image={topMeal.image}
                   upvotes={topMeal.upvotes || 0}
                   isPicked={topMeal.isPicked}
+                  onTogglePick={() => toggleMealPicked(topMeal.id)}
                 />
               ) : (
                 <Link

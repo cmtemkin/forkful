@@ -6,7 +6,7 @@ import { useCalendar } from '@/contexts/CalendarContext';
 import { Link } from 'react-router-dom';
 
 const DailyView = () => {
-  const { currentDate, setCurrentDate, mealTypes, getMealsByType } = useCalendar();
+  const { currentDate, setCurrentDate, mealTypes, getMealsByType, toggleMealPicked } = useCalendar();
   
   const formattedDate = format(currentDate, 'MMMM d');
   
@@ -74,7 +74,20 @@ const DailyView = () => {
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleMealPicked(meal.id);
+                        }}
+                        className="flex items-center justify-center h-8 w-8 rounded-lg mr-2"
+                      >
+                        <div className={`flex items-center justify-center h-8 w-8 rounded-lg ${
+                          meal.isPicked ? 'bg-primary-coral text-white' : 'bg-slate-accent/10 text-slate-accent border border-slate-accent/30'
+                        }`}>
+                          <Utensils className="h-4 w-4" />
+                        </div>
+                      </button>
                     </Link>
                   ))}
                 </div>

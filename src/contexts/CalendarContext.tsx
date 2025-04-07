@@ -33,6 +33,7 @@ interface CalendarContextType {
   getMealsForDay: (date: Date) => Meal[];
   getMealsByType: (date: Date, mealType: MealType) => Meal[];
   dayToString: (date: Date) => DayString;
+  toggleMealPicked: (mealId: string) => void;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(undefined);
@@ -119,6 +120,33 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     );
   };
   
+  // Add a new function to toggle the picked status of a meal
+  const toggleMealPicked = (mealId: string) => {
+    const storedMeals = localStorage.getItem('forkful_meals');
+    if (storedMeals) {
+      try {
+        const allMeals = JSON.parse(storedMeals) as Meal[];
+        const updatedMeals = allMeals.map(meal => {
+          if (meal.id === mealId) {
+            return {
+              ...meal,
+              isPicked: !meal.isPicked,
+              pickedByUserId: !meal.isPicked ? 'current-user' : undefined,
+              pickedAt: !meal.isPicked ? new Date().toISOString() : undefined
+            };
+          }
+          return meal;
+        });
+        
+        localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        setMeals(updatedMeals);
+        window.dispatchEvent(new Event('forkful-meals-updated'));
+      } catch (err) {
+        console.error('Error toggling meal picked status', err);
+      }
+    }
+  };
+  
   return (
     <CalendarContext.Provider
       value={{
@@ -134,7 +162,8 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
         getWeekDays,
         getMealsForDay,
         getMealsByType,
-        dayToString
+        dayToString,
+        toggleMealPicked
       }}
     >
       {children}

@@ -38,7 +38,6 @@ const PickMealButton = ({
   disabled = false, 
   className 
 }: PickMealButtonProps) => {
-  const [showMessage, setShowMessage] = useState(false);
   const { toast } = useToast();
 
   const handleToggle = () => {
@@ -52,6 +51,12 @@ const PickMealButton = ({
       toast({
         title: "Meal picked!",
         description: msg,
+        duration: 2000,
+      });
+    } else {
+      toast({
+        title: "Meal unpicked",
+        description: "This meal has been removed from your calendar",
         duration: 2000,
       });
     }
@@ -88,4 +93,3 @@ const PickMealButton = ({
 };
 
 export default PickMealButton;
-
