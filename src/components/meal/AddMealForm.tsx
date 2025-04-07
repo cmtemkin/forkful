@@ -1,32 +1,33 @@
 
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import DateSelector from '@/components/meal/DateSelector';
+import { Button } from '@/components/ui/button';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
-import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
 import RecipeUrlInput from '@/components/meal/RecipeUrlInput';
+import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
+import DateSelector from '@/components/meal/DateSelector';
+import MealAssignmentToggle from '@/components/meal/MealAssignmentToggle';
 
 interface AddMealFormProps {
   title: string;
-  setTitle: (title: string) => void;
+  setTitle: React.Dispatch<React.SetStateAction<string>>;
   mealType: string;
-  setMealType: (mealType: string) => void;
+  setMealType: React.Dispatch<React.SetStateAction<string>>;
   date: Date | undefined;
-  setDate: (date: Date | undefined) => void;
+  setDate: React.Dispatch<React.SetStateAction<Date | undefined>>;
   ingredients: string;
-  setIngredients: (ingredients: string) => void;
+  setIngredients: React.Dispatch<React.SetStateAction<string>>;
   instructions: string;
-  setInstructions: (instructions: string) => void;
+  setInstructions: React.Dispatch<React.SetStateAction<string>>;
   imageUrl: string;
-  setImageUrl: (imageUrl: string) => void;
+  setImageUrl: React.Dispatch<React.SetStateAction<string>>;
   recipeUrl: string;
-  setRecipeUrl: (recipeUrl: string) => void;
+  setRecipeUrl: React.Dispatch<React.SetStateAction<string>>;
   mode: 'date' | 'event';
-  setMode: (mode: 'date' | 'event') => void;
+  setMode: React.Dispatch<React.SetStateAction<'date' | 'event'>>;
   selectedEvent: string;
-  setSelectedEvent: (eventId: string) => void;
+  setSelectedEvent: React.Dispatch<React.SetStateAction<string>>;
   onSubmit: (e: React.FormEvent) => void;
   events: Array<{ id: string; name: string; date: Date }>;
 }
@@ -53,105 +54,76 @@ const AddMealForm = ({
   onSubmit,
   events
 }: AddMealFormProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
+  
+  const handleImageError = () => {
+    setImageUrl('');
   };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, this would upload the file to a server
-      // For now, we'll just create a local URL
-      const objectUrl = URL.createObjectURL(file);
-      setImageUrl(objectUrl);
-    }
+  
+  const handleRecipeUrl = (url: string) => {
+    setRecipeUrl(url);
   };
-
-  // Handle scraped recipe data
-  const handleScrapedData = (data: { 
-    title?: string; 
-    ingredients?: string; 
-    instructions?: string[];
-    imageUrl?: string;
-    sourceUrl?: string;
-  }) => {
+  
+  const handleScrapedData = (data: any) => {
     if (data.title) setTitle(data.title);
     if (data.ingredients) setIngredients(data.ingredients);
     if (data.instructions) setInstructions(data.instructions.join('\n'));
     if (data.imageUrl) setImageUrl(data.imageUrl);
-    if (data.sourceUrl) setRecipeUrl(data.sourceUrl);
   };
-
+  
   return (
-    <form onSubmit={onSubmit} className="px-4 py-6 space-y-6">
-      {/* Recipe URL input */}
+    <form onSubmit={onSubmit} className="space-y-6 p-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Have a recipe link?</label>
+        <label className="block text-sm font-medium mb-1">Image</label>
+        <div className="mb-4">
+          <RecipeImagePreview 
+            imageUrl={imageUrl} 
+            title={title} 
+            onError={handleImageError}
+          />
+        </div>
         <RecipeUrlInput 
+          onImageUrl={setImageUrl} 
+          initialUrl={recipeUrl}
           onScrapedData={handleScrapedData}
-          onRecipeUrl={setRecipeUrl}
-          onImageUrl={setImageUrl}
         />
       </div>
       
-      {/* Toggle between Date and Event */}
-      <MealAssignmentToggle 
-        mode={mode} 
-        setMode={setMode} 
-        date={date} 
+      <div>
+        <label className="block text-sm font-medium mb-1">Title</label>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter meal title"
+          required
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <MealTypeSelector
+          value={mealType}
+          onChange={(value) => setMealType(value)}
+        />
+      </div>
+      
+      <MealAssignmentToggle
+        mode={mode}
+        setMode={setMode}
+        date={date}
         setDate={setDate}
         selectedEvent={selectedEvent}
         setSelectedEvent={setSelectedEvent}
         events={events}
       />
       
-      {/* Meal type selection */}
-      <MealTypeSelector 
-        value={mealType} 
-        onChange={(value) => setMealType(value)} 
-      />
-      
-      {/* Meal details */}
       <div>
-        <label className="block text-sm font-medium mb-1">Meal name</label>
-        <Input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Chicken Alfredo"
-          required
-        />
-      </div>
-      
-      {/* Image preview */}
-      <div onClick={handleImageClick} className="cursor-pointer">
-        <label className="block text-sm font-medium mb-1">Recipe Image (click to change)</label>
-        <div className="w-full max-h-48 rounded-lg overflow-hidden">
-          <RecipeImagePreview 
-            imageUrl={imageUrl}
-            title={title}
-            onError={() => setImageUrl("")}
-          />
-        </div>
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          accept="image/*"
-          className="hidden"
-        />
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Ingredients (separated by commas or new lines)</label>
+        <label className="block text-sm font-medium mb-1">Ingredients (one per line)</label>
         <Textarea
           value={ingredients}
           onChange={(e) => setIngredients(e.target.value)}
-          placeholder="List ingredients, separated by commas or new lines"
+          placeholder="Enter ingredients, one per line"
           className="min-h-[100px]"
         />
-        <p className="text-xs text-slate-accent mt-1">Press Enter or use commas for multiple ingredients</p>
+        <p className="text-xs text-gray-500 mt-1">Press Enter for a new ingredient</p>
       </div>
       
       <div>
@@ -159,17 +131,23 @@ const AddMealForm = ({
         <Textarea
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
-          placeholder="List cooking steps, one per line"
-          className="min-h-[100px]"
+          placeholder="Enter cooking instructions, one step per line"
+          className="min-h-[150px]"
         />
-        <p className="text-xs text-slate-accent mt-1">Press Enter for each new step</p>
+        <p className="text-xs text-gray-500 mt-1">Press Enter for a new step</p>
       </div>
       
-      <Button 
-        type="submit" 
-        className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full"
-      >
-        Add Idea
+      <div>
+        <label className="block text-sm font-medium mb-1">Recipe URL (optional)</label>
+        <Input
+          value={recipeUrl}
+          onChange={(e) => setRecipeUrl(e.target.value)}
+          placeholder="https://example.com/recipe"
+        />
+      </div>
+      
+      <Button type="submit" className="w-full py-6 text-lg rounded-xl">
+        Add Meal Idea
       </Button>
     </form>
   );
