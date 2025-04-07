@@ -1,26 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
-
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import ErrorAlert from '@/components/auth/ErrorAlert';
+import LoginForm from '@/components/auth/LoginForm';
+import SignUpForm from '@/components/auth/SignUpForm';
+import { SignUpFormValues } from '@/components/auth/SignUpForm';
 
 const Auth = () => {
   const { session, error: authError, clearError, signInWithPassword, signUp } = useAuth();
@@ -40,25 +27,14 @@ const Auth = () => {
     return <Navigate to="/" replace />;
   }
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-    },
-  });
-
   // Clear error when changing tabs
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     setFormError(null);
     clearError();
-    form.clearErrors();
   };
 
-  const handleSignUp = async (values: FormValues) => {
+  const handleSignUp = async (values: SignUpFormValues) => {
     setIsLoading(true);
     setFormError(null);
     
@@ -84,7 +60,6 @@ const Auth = () => {
         });
         
         // Reset form and switch to login tab
-        form.reset();
         setActiveTab("login");
       }
     } finally {
@@ -92,7 +67,7 @@ const Auth = () => {
     }
   };
 
-  const handleSignIn = async (values: FormValues) => {
+  const handleSignIn = async (values: { email: string, password: string }) => {
     setIsLoading(true);
     setFormError(null);
     
@@ -130,136 +105,14 @@ const Auth = () => {
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           
-          {(formError || authError) && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{formError || authError}</AlertDescription>
-            </Alert>
-          )}
+          <ErrorAlert message={formError || authError} />
           
           <TabsContent value="signup">
-            <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Create an account</h2>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSignUp)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your first name" {...field} className="rounded-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your last name" {...field} className="rounded-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your@email.com" {...field} className="rounded-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••" {...field} className="rounded-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary-coral hover:bg-primary-coral/90 rounded-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating account...
-                    </>
-                  ) : "Sign Up"}
-                </Button>
-              </form>
-            </Form>
+            <SignUpForm onSubmit={handleSignUp} isLoading={isLoading} />
           </TabsContent>
           
           <TabsContent value="login">
-            <h2 className="text-xl font-medium mb-4 text-charcoal-gray">Welcome back</h2>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSignIn)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your@email.com" {...field} className="rounded-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="••••••" {...field} className="rounded-full" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary-coral hover:bg-primary-coral/90 rounded-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logging in...
-                    </>
-                  ) : "Login"}
-                </Button>
-              </form>
-            </Form>
+            <LoginForm onSubmit={handleSignIn} isLoading={isLoading} />
           </TabsContent>
         </Tabs>
       </div>
