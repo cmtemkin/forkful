@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Clock, Coffee, UtensilsCrossed } from 'lucide-react';
@@ -84,6 +83,11 @@ const getMealTypeIcon = (mealType: string) => {
     default:
       return <Clock className="h-3 w-3 mr-1" />;
   }
+};
+
+// Notify other components about the meal update
+const notifyMealUpdate = () => {
+  window.dispatchEvent(new Event('forkful-meals-updated'));
 };
 
 const VotingFeed = () => {
@@ -180,6 +184,9 @@ const VotingFeed = () => {
     });
     
     setMeals(updatedMeals);
+    
+    // Notify other components about the meal update
+    notifyMealUpdate();
   };
   
   if (isLoading) {

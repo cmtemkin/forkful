@@ -11,6 +11,7 @@ interface Meal {
   day: string;
   mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
   ingredients: string[];
+  instructions?: string[];
   isPicked?: boolean;
   pickedByUserId?: string;
   pickedAt?: string;
@@ -19,6 +20,11 @@ interface Meal {
   submittedBy?: string;
   dateAdded?: string;
 }
+
+const notifyMealUpdate = () => {
+  // Dispatch a custom event to notify other components about the meal update
+  window.dispatchEvent(new Event('forkful-meals-updated'));
+};
 
 export function useMealDetails(id: string | undefined) {
   const navigate = useNavigate();
@@ -107,6 +113,9 @@ export function useMealDetails(id: string | undefined) {
           pickedAt: !meal.isPicked ? new Date().toISOString() : undefined 
         });
         
+        // Notify other components about the meal update
+        notifyMealUpdate();
+        
         if (!meal.isPicked) {
           // Meal is being picked
           console.log('Meal picked!');
@@ -158,6 +167,9 @@ export function useMealDetails(id: string | undefined) {
           }
         });
         
+        // Notify other components about the meal update
+        notifyMealUpdate();
+        
         toast({
           title: isUpvote ? "Upvoted" : "Downvoted",
           description: `You've ${isUpvote ? 'upvoted' : 'downvoted'} this meal.`,
@@ -190,7 +202,7 @@ export function useMealDetails(id: string | undefined) {
           ...meal,
           title: editTitle,
           mealType: editMealType,
-          day: editDate ? format(editDate, 'EEEE').substring(0, 3) as any : meal.day,
+          day: editDate ? format(editDate, 'EEE').substring(0, 3) as any : meal.day,
           ingredients: processedIngredients,
           image: editImage
         };
@@ -203,6 +215,9 @@ export function useMealDetails(id: string | undefined) {
         
         setMeal(updatedMeal);
         setIsEditing(false);
+        
+        // Notify other components about the meal update
+        notifyMealUpdate();
         
         toast({
           title: "Changes saved",
@@ -229,6 +244,9 @@ export function useMealDetails(id: string | undefined) {
         const updatedMeals = meals.filter(m => m.id !== id);
         
         localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        
+        // Notify other components about the meal update
+        notifyMealUpdate();
         
         toast({
           title: "Meal deleted",

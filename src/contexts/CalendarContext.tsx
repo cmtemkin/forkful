@@ -60,6 +60,28 @@ export const CalendarProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
   
+  // Add a listener to update meals whenever localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedMeals = localStorage.getItem('forkful_meals');
+      if (storedMeals) {
+        try {
+          const parsedMeals = JSON.parse(storedMeals) as Meal[];
+          setMeals(parsedMeals);
+        } catch (err) {
+          console.error('Error parsing meals from localStorage', err);
+        }
+      }
+    };
+
+    // Use a custom event to trigger updates
+    window.addEventListener('forkful-meals-updated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('forkful-meals-updated', handleStorageChange);
+    };
+  }, []);
+  
   const mealTypes: MealType[] = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
   const days: DayString[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   

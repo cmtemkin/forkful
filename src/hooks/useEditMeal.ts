@@ -15,6 +15,11 @@ interface FormValues {
   day: string;
 }
 
+// Notify other components about the meal update
+const notifyMealUpdate = () => {
+  window.dispatchEvent(new Event('forkful-meals-updated'));
+};
+
 export const useEditMeal = (id: string | undefined) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -137,6 +142,9 @@ export const useEditMeal = (id: string | undefined) => {
         });
         
         localStorage.setItem('forkful_meals', JSON.stringify(updatedMeals));
+        
+        // Notify other components about the meal update
+        notifyMealUpdate();
       }
       
       toast({
