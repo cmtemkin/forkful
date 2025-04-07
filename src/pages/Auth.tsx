@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
@@ -24,12 +23,18 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Auth = () => {
-  const { session } = useAuth();
+  const { session, error: authError, clearError, signInWithPassword, signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("login");
+  
+  useEffect(() => {
+    // Clear errors when component mounts
+    clearError();
+    setFormError(null);
+  }, [clearError]);
   
   if (session) {
     return <Navigate to="/" replace />;
@@ -48,71 +53,40 @@ const Auth = () => {
   // Clear error when changing tabs
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setAuthError(null);
+    setFormError(null);
+    clearError();
     form.clearErrors();
   };
 
   const handleSignUp = async (values: FormValues) => {
     setIsLoading(true);
-    setAuthError(null);
+    setFormError(null);
     
     try {
-      console.log("Attempting signup with:", values.email);
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            first_name: values.firstName,
-            last_name: values.lastName,
-          }
-        }
-      });
+      const { error } = await signUp(
+        values.email, 
+        values.password, 
+        { firstName: values.firstName, lastName: values.lastName }
+      );
 
       if (error) {
-        console.error("Signup error:", error);
-        setAuthError(error.message);
+        setFormError(error);
         
         toast({
           title: "Error signing up",
-          description: error.message,
+          description: error,
           variant: "destructive",
         });
       } else {
-        console.log("Signup successful:", data);
-        
-        // Also create or update the profile manually to ensure consistency
-        if (data?.user) {
-          const { error: profileError } = await supabase.from('profiles').upsert({
-            id: data.user.id,
-            first_name: values.firstName,
-            last_name: values.lastName,
-            display_name: `${values.firstName} ${values.lastName}`
-          });
-          
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
-        }
-        
         toast({
           title: "Success!",
           description: "Your account has been created. You can now sign in.",
         });
         
-        // Automatically switch to login tab without using direct DOM manipulation
+        // Reset form and switch to login tab
         form.reset();
         setActiveTab("login");
       }
-    } catch (err: any) {
-      console.error("Unexpected signup error:", err);
-      setAuthError(err.message || "An unexpected error occurred. Please try again.");
-      
-      toast({
-        title: "Error signing up",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -120,42 +94,26 @@ const Auth = () => {
 
   const handleSignIn = async (values: FormValues) => {
     setIsLoading(true);
-    setAuthError(null);
+    setFormError(null);
     
     try {
-      console.log("Attempting signin with:", values.email);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      const { error } = await signInWithPassword(values.email, values.password);
 
       if (error) {
-        console.error("Signin error:", error);
-        setAuthError(error.message);
+        setFormError(error);
         
         toast({
           title: "Error signing in",
-          description: error.message,
+          description: error,
           variant: "destructive",
         });
       } else {
-        console.log("Signin successful:", data);
-        
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
         navigate('/');
       }
-    } catch (err: any) {
-      console.error("Unexpected signin error:", err);
-      setAuthError(err.message || "An unexpected error occurred. Please try again.");
-      
-      toast({
-        title: "Error signing in",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
@@ -172,11 +130,11 @@ const Auth = () => {
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           
-          {authError && (
+          {(formError || authError) && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{authError}</AlertDescription>
+              <AlertDescription>{formError || authError}</AlertDescription>
             </Alert>
           )}
           
