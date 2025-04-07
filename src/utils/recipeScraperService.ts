@@ -10,13 +10,13 @@ export async function scrapeRecipe(url: string): Promise<ScrapedRecipe | null> {
   try {
     console.log("Attempting to scrape recipe from URL:", url);
     
-    // Use the new recipe scraper API
+    // Use the recipe scraper API with correct JSON format
     const response = await fetch('https://b0b8d8dc-e78d-47d1-afe9-e21296de19ac-00-35giat6k1wqxr.spock.replit.dev/chain-recipe-scraper', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url }), // Send URL in the correct format
     });
     
     if (!response.ok) {

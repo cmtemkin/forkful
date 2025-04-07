@@ -65,13 +65,13 @@ const RecipeUrlInput = ({
     setShowFallback(false);
     
     try {
-      // Call the new recipe scraper API
+      // Call the recipe scraper API with the correct format
       const response = await fetch('https://b0b8d8dc-e78d-47d1-afe9-e21296de19ac-00-35giat6k1wqxr.spock.replit.dev/chain-recipe-scraper', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url }), // Ensure correct JSON format with url property
       });
       
       if (!response.ok) {
@@ -79,9 +79,11 @@ const RecipeUrlInput = ({
       }
       
       const data: RecipeScraperResponse = await response.json();
+      console.log("Raw API response:", data);
       
       // Handle error or empty data from the service
       if (data.error || (!data.title && !data.ingredients?.length)) {
+        console.error("No recipe data found or error:", data.error || "Empty response");
         setShowFallback(true);
         return;
       }
