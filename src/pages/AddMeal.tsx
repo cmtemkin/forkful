@@ -1,17 +1,10 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import DateSelector from '@/components/meal/DateSelector';
-import MealTypeSelector from '@/components/meal/MealTypeSelector';
-import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
-import RecipeUrlInput from '@/components/meal/RecipeUrlInput';
 import { format } from 'date-fns';
-import { scrapeRecipe } from '@/utils/recipeScraperService';
+import AddMealForm from '@/components/meal/AddMealForm';
+import AddMealHeader from '@/components/meal/AddMealHeader';
 
 // Mock events - in a real app, this would come from a database
 const mockEvents = [
@@ -23,7 +16,6 @@ const AddMeal = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryParams = new URLSearchParams(location.search);
   const defaultDay = queryParams.get('day') || '';
@@ -39,7 +31,6 @@ const AddMeal = () => {
   const [recipeUrl, setRecipeUrl] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(defaultEventId);
   const [mode, setMode] = useState<'date' | 'event'>(defaultEventId ? 'event' : 'date');
-  const [isScrapingRecipe, setIsScrapingRecipe] = useState(false);
   
   // Find the event object if eventId is provided
   useEffect(() => {
@@ -116,174 +107,32 @@ const AddMeal = () => {
     }
   };
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // In a real app, this would upload the file to a server
-      // For now, we'll just create a local URL
-      const objectUrl = URL.createObjectURL(file);
-      setImageUrl(objectUrl);
-    }
-  };
-  
-  const toggleMode = () => {
-    setMode(mode === 'date' ? 'event' : 'date');
-    // Reset the selections when switching modes
-    if (mode === 'date') {
-      setSelectedEvent('');
-    }
-  };
-  
-  // Handle scraped recipe data
-  const handleScrapedData = (data: { 
-    title?: string; 
-    ingredients?: string; 
-    instructions?: string[];
-    imageUrl?: string;
-    sourceUrl?: string;
-  }) => {
-    if (data.title) setTitle(data.title);
-    if (data.ingredients) setIngredients(data.ingredients);
-    if (data.instructions) setInstructions(data.instructions.join('\n'));
-    if (data.imageUrl) setImageUrl(data.imageUrl);
-    if (data.sourceUrl) setRecipeUrl(data.sourceUrl);
-  };
-  
   return (
     <div className="pb-20">
-      {/* Header - with reduced padding */}
-      <div className="bg-primary text-white px-4 py-2 flex items-center">
-        <button onClick={() => navigate(-1)} className="mr-4">
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <h1 className="text-2xl font-bold">Add New Idea</h1>
-      </div>
+      <AddMealHeader />
       
-      <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
-        {/* Recipe URL input */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Have a recipe link?</label>
-          <RecipeUrlInput 
-            onScrapedData={handleScrapedData}
-            onRecipeUrl={setRecipeUrl}
-            onImageUrl={setImageUrl}
-          />
-        </div>
-        
-        {/* Toggle between Date and Event */}
-        <div className="flex">
-          <Button 
-            type="button" 
-            variant={mode === 'date' ? 'default' : 'outline'} 
-            className="flex-1 rounded-r-none"
-            onClick={() => setMode('date')}
-          >
-            Add to Calendar
-          </Button>
-          <Button 
-            type="button" 
-            variant={mode === 'event' ? 'default' : 'outline'} 
-            className="flex-1 rounded-l-none"
-            onClick={() => setMode('event')}
-          >
-            Add to Event
-          </Button>
-        </div>
-        
-        {/* Date or Event selection based on mode */}
-        {mode === 'date' ? (
-          <DateSelector 
-            date={date} 
-            onDateChange={setDate} 
-          />
-        ) : (
-          <div>
-            <label className="block text-sm font-medium mb-1">Event</label>
-            <select
-              value={selectedEvent}
-              onChange={(e) => setSelectedEvent(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              required={mode === 'event'}
-            >
-              <option value="">Select an event</option>
-              {mockEvents.map(event => (
-                <option key={event.id} value={event.id}>
-                  {event.name} ({event.date.toLocaleDateString()})
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        
-        {/* Meal type selection */}
-        <MealTypeSelector 
-          value={mealType} 
-          onChange={(value) => setMealType(value)} 
-        />
-        
-        {/* Meal details */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Meal name</label>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Chicken Alfredo"
-            required
-          />
-        </div>
-        
-        {/* Image preview */}
-        <div onClick={handleImageClick} className="cursor-pointer">
-          <label className="block text-sm font-medium mb-1">Recipe Image (click to change)</label>
-          <div className="w-full max-h-48 rounded-lg overflow-hidden">
-            <RecipeImagePreview 
-              imageUrl={imageUrl}
-              title={title}
-              onError={() => setImageUrl("")}
-            />
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*"
-            className="hidden"
-          />
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1">Ingredients (separated by commas or new lines)</label>
-          <Textarea
-            value={ingredients}
-            onChange={(e) => setIngredients(e.target.value)}
-            placeholder="List ingredients, separated by commas or new lines"
-            className="min-h-[100px]"
-          />
-          <p className="text-xs text-slate-accent mt-1">Press Enter or use commas for multiple ingredients</p>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-1">Instructions (optional)</label>
-          <Textarea
-            value={instructions}
-            onChange={(e) => setInstructions(e.target.value)}
-            placeholder="List cooking steps, one per line"
-            className="min-h-[100px]"
-          />
-          <p className="text-xs text-slate-accent mt-1">Press Enter for each new step</p>
-        </div>
-        
-        <Button 
-          type="submit" 
-          className="w-full bg-primary hover:bg-primary/90 text-white py-6 rounded-full"
-        >
-          Add Idea
-        </Button>
-      </form>
+      <AddMealForm
+        title={title}
+        setTitle={setTitle}
+        mealType={mealType}
+        setMealType={setMealType}
+        date={date}
+        setDate={setDate}
+        ingredients={ingredients}
+        setIngredients={setIngredients}
+        instructions={instructions}
+        setInstructions={setInstructions}
+        imageUrl={imageUrl}
+        setImageUrl={setImageUrl}
+        recipeUrl={recipeUrl}
+        setRecipeUrl={setRecipeUrl}
+        mode={mode}
+        setMode={setMode}
+        selectedEvent={selectedEvent}
+        setSelectedEvent={setSelectedEvent}
+        onSubmit={handleSubmit}
+        events={mockEvents}
+      />
     </div>
   );
 };
