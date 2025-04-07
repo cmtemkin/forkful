@@ -6,6 +6,7 @@ import PickMealButton from './meal/PickMealButton';
 import VoteButtons from './meal/VoteButtons';
 import MealBadges from './meal/MealBadges';
 import MealCardTitle from './meal/MealCardTitle';
+import MealCardImage from './meal/MealCardImage';
 
 interface MealCardProps {
   id: string;
@@ -36,14 +37,6 @@ const MealCard = ({
   const [localDownvotes, setLocalDownvotes] = useState(downvotes);
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   
-  const handlePickToggle = (e: React.MouseEvent) => {
-    if (e && onTogglePick) {
-      e.preventDefault();
-      e.stopPropagation();
-      onTogglePick();
-    }
-  };
-  
   return (
     <Link to={`/meal/${id}`} className="block">
       <motion.div 
@@ -58,7 +51,7 @@ const MealCard = ({
             {onTogglePick && (
               <PickMealButton 
                 isPicked={isPicked} 
-                onTogglePick={() => {}} 
+                onTogglePick={onTogglePick}
                 className="absolute top-1/2 right-0 -translate-y-1/2"
               />
             )}
