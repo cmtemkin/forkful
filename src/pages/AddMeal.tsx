@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import DateSelector from '@/components/meal/DateSelector';
 import MealTypeSelector from '@/components/meal/MealTypeSelector';
 import RecipeImagePreview from '@/components/meal/RecipeImagePreview';
+import RecipeUrlInput from '@/components/meal/RecipeUrlInput';
 import { format } from 'date-fns';
+import { scrapeRecipe } from '@/utils/recipeScraperService';
 
 // Mock events - in a real app, this would come from a database
 const mockEvents = [
@@ -32,9 +34,12 @@ const AddMeal = () => {
   const [mealType, setMealType] = useState(defaultMealType || "Dinner");
   const [title, setTitle] = useState("");
   const [ingredients, setIngredients] = useState("");
+  const [instructions, setInstructions] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [recipeUrl, setRecipeUrl] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(defaultEventId);
   const [mode, setMode] = useState<'date' | 'event'>(defaultEventId ? 'event' : 'date');
+  const [isScrapingRecipe, setIsScrapingRecipe] = useState(false);
   
   // Find the event object if eventId is provided
   useEffect(() => {
@@ -68,6 +73,12 @@ const AddMeal = () => {
       .map(item => item.trim())
       .filter(item => item !== '');
     
+    // Process instructions - split by newlines
+    const processedInstructions = instructions
+      .split(/\n+/)
+      .map(item => item.trim())
+      .filter(item => item !== '');
+    
     // Create a new meal object
     const newMeal = {
       id: `meal-${Date.now()}`, // Generate a unique ID using timestamp
@@ -79,6 +90,8 @@ const AddMeal = () => {
       day: format(date || new Date(), 'EEEE').substring(0, 3) as any, // Convert to 'Mon', 'Tue', etc.
       mealType: mealType,
       ingredients: processedIngredients,
+      instructions: processedInstructions,
+      sourceUrl: recipeUrl || '',
       dateAdded: new Date().toISOString(),
       eventId: mode === 'event' ? selectedEvent : null,  // Add eventId if in event mode
     };
@@ -125,6 +138,21 @@ const AddMeal = () => {
     }
   };
   
+  // Handle scraped recipe data
+  const handleScrapedData = (data: { 
+    title?: string; 
+    ingredients?: string; 
+    instructions?: string[];
+    imageUrl?: string;
+    sourceUrl?: string;
+  }) => {
+    if (data.title) setTitle(data.title);
+    if (data.ingredients) setIngredients(data.ingredients);
+    if (data.instructions) setInstructions(data.instructions.join('\n'));
+    if (data.imageUrl) setImageUrl(data.imageUrl);
+    if (data.sourceUrl) setRecipeUrl(data.sourceUrl);
+  };
+  
   return (
     <div className="pb-20">
       {/* Header - with reduced padding */}
@@ -136,6 +164,16 @@ const AddMeal = () => {
       </div>
       
       <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
+        {/* Recipe URL input */}
+        <div>
+          <label className="block text-sm font-medium mb-1">Have a recipe link?</label>
+          <RecipeUrlInput 
+            onScrapedData={handleScrapedData}
+            onRecipeUrl={setRecipeUrl}
+            onImageUrl={setImageUrl}
+          />
+        </div>
+        
         {/* Toggle between Date and Event */}
         <div className="flex">
           <Button 
@@ -226,6 +264,17 @@ const AddMeal = () => {
             className="min-h-[100px]"
           />
           <p className="text-xs text-slate-accent mt-1">Press Enter or use commas for multiple ingredients</p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-1">Instructions (optional)</label>
+          <Textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            placeholder="List cooking steps, one per line"
+            className="min-h-[100px]"
+          />
+          <p className="text-xs text-slate-accent mt-1">Press Enter for each new step</p>
         </div>
         
         <Button 
